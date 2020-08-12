@@ -79,8 +79,7 @@ bool DBInterface::updateStory(Story story){
 }
 
 bool DBInterface::addStory(Story story) {
-	cout << "test" << endl;
-	Table table = db->getTable("test2");
+	Table table = db->getTable("test1");
 	try {
 		table.insert().values(Value(), story.title, story.path, story.rating, story.views, 0).execute();
 		return true;
