@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Blurb from '../Blurb';
+import { Container } from 'react-bootstrap';
 
 class StoryPage extends Component {
     constructor(props){
@@ -17,7 +18,13 @@ class StoryPage extends Component {
     render() {
       if (this.state.gotResults == true){
         return (
-          <Blurb big={this.state.results.text.fullTitle} little={this.state.results.text.chapter1} />
+          <Container className="page" >
+            <h2>{this.state.results.text.fullTitle}</h2>
+            <br/>
+            <text className="jsonOutput">
+              {this.state.results.text.chapter1}
+            </text>
+          </Container>
         )
       }
       return (

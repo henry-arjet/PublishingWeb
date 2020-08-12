@@ -36,12 +36,19 @@ footer {
 .storyCard:hover{
   cursor:pointer;
 }
+.storyCardStats{
+  display: fles;
+  justify-content: space-between;
+}
 .page{
   margin-left: 3rem;
-  margin-right: 3rem;
   margin-bottom: 1rem;
 }
 
 .devButton{
   margin: 0.5rem;
+}
+
+.jsonOutput{
+  white-space: pre-line;
 }

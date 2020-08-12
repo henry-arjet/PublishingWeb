@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import Card from 'react-bootstrap/Card'
 import { LinkContainer } from 'react-router-bootstrap';
+import { Container, Col, Row } from 'react-bootstrap';
 
 class StoryCard extends Component {
     constructor(props){
@@ -15,7 +16,13 @@ class StoryCard extends Component {
                 <LinkContainer to = {this.props.link}>
                     <Card.Body>
                         <Card.Title>{this.props.title}</Card.Title>
-                        <Card.Text>{this.props.text}</Card.Text>
+                        <Container >
+                            <Row className="StoryCardStats">
+                                <Card.Text as="Col">{this.props.rating + "/5.0"}</Card.Text>
+                                <Col />
+                                <Card.Text as="Col">{this.props.views + " views"}</Card.Text>
+                            </Row>
+                        </Container>
                     </Card.Body>
                 </LinkContainer>
             </Card>

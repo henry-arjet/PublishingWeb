@@ -52,8 +52,7 @@ class StoryPage extends Component {
     }
     render() {
       return (
-        <div>
-            <Container fluid className="page">
+            <Container className="page">
                 <Row className="devButtonRow">
                     <Button variant="dark" onClick={this.sortTop} className="devButton">Re-Sort Top Rated</Button>
                     <Button variant="dark" onClick={this.sortViews} className="devButton">Re-Sort Most Viewed</Button>
@@ -91,7 +90,6 @@ class StoryPage extends Component {
                     </Form>
                 </Row>
             </Container>
-        </div>
         )
     }
   }

@@ -7,7 +7,7 @@ import { LinkContainer } from 'react-router-bootstrap';
 class NavBar extends Component {
   render() {
     return (
-      <header>
+      <header fluid>
         <Navbar bg="light"> 
           <LinkContainer to="/"><Navbar.Brand><strong>Publishing Website</strong></Navbar.Brand></LinkContainer>
           <Navbar.Collapse>
