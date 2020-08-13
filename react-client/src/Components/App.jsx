@@ -15,7 +15,6 @@ import AuthContext from "./Context/Auth";
 class App extends Component {
   render() {
     return (
-      <AuthContext.Provider value={false}>
         <Router>
           <div>
             <NavBar />
@@ -39,7 +38,6 @@ class App extends Component {
             <Footer />
           </div>
         </Router>
-      </AuthContext.Provider>
     )
   }
 }

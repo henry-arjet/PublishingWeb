@@ -29,7 +29,7 @@ DBInterface::DBInterface(const std::string& host, uint32_t port, const std::stri
 		cout << "EXCEPTION: " << ex << endl;
 		throw;
 	}
-	
+	cout << "Done" << endl;
 }
 
 struct sortObject { //key/value uints

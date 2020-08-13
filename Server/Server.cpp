@@ -327,12 +327,12 @@ void addStory(http_request const& req) {
 int main()
 {
     //start sql connection first
-    DBInterface db = DBInterface("127.0.0.1", 33060, "app", "xH8#N7GmtILb", "website");
+    DBInterface db = DBInterface("70.113.85.67", 33060, "app", "xH8#N7GmtILb", "website");
     
 
     handleGetQueryID(http_request(), 6);
 
-    const std::wstring base_url = U("http://*:8080");
+    const std::wstring base_url = U("http://localhost:8080");
 
 
     web::http::experimental::listener::http_listener listener(base_url);
@@ -346,10 +346,9 @@ int main()
     listener.support(web::http::methods::PUT, handlePut);
 
     
-   // try {
+    try {
         listener.open().wait();
-
-    /*}
+    }
     catch (web::http::http_exception& ex){
         cout << "HTTP EXCEPTION: " << ex.what() << endl;
         throw;
@@ -361,7 +360,7 @@ int main()
     catch (const char* ex){
         cout << "EXCEPTION: " << ex << endl;
         throw;
-    }*/
+    }
 
     std::wcout << std::wstring(U("Listining for requests at: ")) << base_url << std::endl;
 
