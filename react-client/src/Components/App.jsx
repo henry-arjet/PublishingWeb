@@ -7,7 +7,8 @@ import MostViewedPage from './MostViewedPage';
 import TopRatedPage from './TopRatedPage';
 import StoryPage from './StoryComponent/StoryPage';
 import DevPage from './DevTools/DevPage';
-import AuthContext from "./Context/Auth";
+import {AuthContext} from "./Context/Auth";
+import PrivateRoute from "./PrivateRoute"
 
 
 
@@ -15,6 +16,7 @@ import AuthContext from "./Context/Auth";
 class App extends Component {
   render() {
     return (
+      <AuthContext.Provider value={false}>
         <Router>
           <div>
             <NavBar />
@@ -31,14 +33,17 @@ class App extends Component {
               <Route name="story" path="/story">
                 <StoryPage />
               </Route>
-              <Route name="devtools" path="/devtools">
-                <DevPage />
-              </Route>
+              <PrivateRoute name="devtools" path="/devtools" component={DevPage} />
             </switch>
             <Footer />
           </div>
         </Router>
+      </AuthContext.Provider>
     )
   }
 }
 export default App;
+
+/*              <Route name="devtools" path="/devtools">
+                <DevPage />
+              </Route>*/
