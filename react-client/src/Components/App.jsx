@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import { BrowserRouter as Router, Route, Link} from 'react-router-dom';
 import HomePage from './HomePage';
 import NavBar from './HeaderComponent/NavBar';
@@ -9,14 +9,21 @@ import StoryPage from './StoryComponent/StoryPage';
 import DevPage from './DevTools/DevPage';
 import {AuthContext} from "./Context/Auth";
 import PrivateRoute from "./PrivateRoute"
+import LoginPage from "./Authentication/LoginPage"
 
 
 
 
-class App extends Component {
-  render() {
+function App(props){
+    const existingTokens = JSON.parse(localStorage.getItem("tokens"));
+    const [authTokens, setAuthTokens] = useState(existingTokens);
+    
+    const setTokens = (data) => {
+      localStorage.setItem("tokens", JSON.stringify(data));
+      setAuthTokens(data);
+    }
     return (
-      <AuthContext.Provider value={false}>
+      <AuthContext.Provider value={{authTokens, setAuthTokens: setTokens }}>
         <Router>
           <div>
             <NavBar />
@@ -34,6 +41,7 @@ class App extends Component {
                 <StoryPage />
               </Route>
               <PrivateRoute name="devtools" path="/devtools" component={DevPage} />
+              <Route name="login" path="/auth/login" component={LoginPage}/>
             </switch>
             <Footer />
           </div>
@@ -41,7 +49,7 @@ class App extends Component {
       </AuthContext.Provider>
     )
   }
-}
+
 export default App;
 
 /*              <Route name="devtools" path="/devtools">
