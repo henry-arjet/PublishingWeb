@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{6e7a860a-d892-4966-9cd0-d097fb640e73}</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <ProjectView>ShowAllFiles</ProjectView>
+    <StartupFile>
+    </StartupFile>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{3AF33F2E-1136-4D97-BBB7-1795711AC8B8};{349c5851-65df-11da-9384-00065b846f21};{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}</ProjectTypeGuids>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">16.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    <ScriptArguments>
+    </ScriptArguments>
+    <StartWebBrowser>True</StartWebBrowser>
+    <SaveNodeJsSettingsInProjectFile>True</SaveNodeJsSettingsInProjectFile>
+    <NodeExePath>C:\Program Files\nodejs\node.exe</NodeExePath>
+    <LaunchUrl>localhost</LaunchUrl>
+    <NodejsPort>8080</NodejsPort>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <ItemGroup>
+    <Content Include="package-lock.json" />
+    <Content Include="package.json">
+      <Publish>False</Publish>
+    </Content>
+    <Content Include="webpack.config.js" />
+    <Content Include="Stories\test.json" />
+    <Content Include="react-client\dist\index.html" />
+    <Content Include="react-client\dist\styles.css" />
+    <Content Include="react-client\dist\bundle.js" />
+    <Content Include="react-client\src\index.jsx" />
+    <Content Include="react-client\src\Components\App.jsx" />
+    <Content Include="react-client\src\Components\Blurb.jsx" />
+    <Content Include="react-client\src\Components\HomePage.jsx" />
+    <Content Include="react-client\src\Components\MostViewedPage.jsx" />
+    <Content Include="react-client\src\Components\PrivateRoute.jsx" />
+    <Content Include="react-client\src\Components\TopRatedPage.jsx" />
+    <Content Include="react-client\src\Components\Authentication\LoginPage.jsx" />
+    <Content Include="react-client\src\Components\Authentication\SignUpForm.jsx" />
+    <Content Include="react-client\src\Components\Authentication\SignUpPage.jsx" />
+    <Content Include="react-client\src\Components\Cards\CardGrid.jsx" />
+    <Content Include="react-client\src\Components\Cards\StoryCard.jsx" />
+    <Content Include="react-client\src\Components\Context\Auth.jsx" />
+    <Content Include="react-client\src\Components\DevTools\DevPage.jsx" />
+    <Content Include="react-client\src\Components\FooterComponent\Footer.jsx" />
+    <Content Include="react-client\src\Components\HeaderComponent\NavBar.jsx" />
+    <Content Include="react-client\src\Components\StoryComponent\StoryPage.jsx" />
+    <Content Include="Server\x64\Release\Server.vcxproj.FileListAbsolute.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Client" />
+    <Folder Include="lists" />
+    <Folder Include="packages" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build\native" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build\native\include" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build\native\include\cpprest" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build\native\include\cpprest\details" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build\native\include\pplx" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build\native\x64" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build\native\x64\bin" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build\native\x64\lib" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build\native\x64\lib\cmake" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build\native\x64\lib\cmake\cpprestsdk" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build\native\x86" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build\native\x86\bin" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build\native\x86\lib" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build\native\x86\lib\cmake" />
+    <Folder Include="packages\cpprestsdk.v142.2.10.15\build\native\x86\lib\cmake\cpprestsdk" />
+    <Folder Include="react-client" />
+    <Folder Include="react-client\dist" />
+    <Folder Include="react-client\src" />
+    <Folder Include="react-client\src\Components" />
+    <Folder Include="react-client\src\Components\Authentication" />
+    <Folder Include="react-client\src\Components\Cards" />
+    <Folder Include="react-client\src\Components\Context" />
+    <Folder Include="react-client\src\Components\DevTools" />
+    <Folder Include="react-client\src\Components\FooterComponent" />
+    <Folder Include="react-client\src\Components\HeaderComponent" />
+    <Folder Include="react-client\src\Components\StoryComponent" />
+    <Folder Include="Release" />
+    <Folder Include="Server" />
+    <Folder Include="Server\include" />
+    <Folder Include="Server\include\arjet" />
+    <Folder Include="Server\source" />
+    <Folder Include="Server\x64" />
+    <Folder Include="Server\x64\Release" />
+    <Folder Include="Server\x64\Release\Server.tlog" />
+    <Folder Include="Stories" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <Import Project="$(VSToolsPath)\Node.js Tools\Microsoft.NodejsToolsV2.targets" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>False</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>0</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:48022/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>True</UseCustomServer>
+          <CustomServerUrl>http://localhost:1337</CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}" User="">
+        <WebProjectProperties>
+          <StartPageUrl>
+          </StartPageUrl>
+          <StartAction>CurrentPage</StartAction>
+          <AspNetDebugging>True</AspNetDebugging>
+          <SilverlightDebugging>False</SilverlightDebugging>
+          <NativeDebugging>False</NativeDebugging>
+          <SQLDebugging>False</SQLDebugging>
+          <ExternalProgram>
+          </ExternalProgram>
+          <StartExternalURL>
+          </StartExternalURL>
+          <StartCmdLineArguments>
+          </StartCmdLineArguments>
+          <StartWorkingDirectory>
+          </StartWorkingDirectory>
+          <EnableENC>False</EnableENC>
+          <AlwaysStartWebServerOnDebug>False</AlwaysStartWebServerOnDebug>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

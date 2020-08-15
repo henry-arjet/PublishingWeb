@@ -5,4 +5,4 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-export const AuthContext = createContext(false);
+export const AuthContext = createContext({userName: "", password: ""});

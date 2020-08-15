@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Navbar from 'react-bootstrap/Navbar';
 import Nav from 'react-bootstrap/Nav';
 import { LinkContainer } from 'react-router-bootstrap';
-// 
+
 
 class NavBar extends Component {
   render() {
@@ -20,6 +20,9 @@ class NavBar extends Component {
             </Nav.Link></LinkContainer>
             <LinkContainer to="/devtools"><Nav.Link className="headerNavButton">
               <strong>Dev Tools</strong>
+            </Nav.Link></LinkContainer>
+            <LinkContainer to="/auth/login"><Nav.Link className="headerNavButton">
+              <strong>Log In</strong>
             </Nav.Link></LinkContainer>
             </Nav>
           </Navbar.Collapse>

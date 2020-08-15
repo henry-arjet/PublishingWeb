@@ -10,9 +10,7 @@ import DevPage from './DevTools/DevPage';
 import {AuthContext} from "./Context/Auth";
 import PrivateRoute from "./PrivateRoute"
 import LoginPage from "./Authentication/LoginPage"
-
-
-
+import SignUpPage from './Authentication/SignUpPage';
 
 function App(props){
     const existingTokens = JSON.parse(localStorage.getItem("tokens"));
@@ -42,6 +40,7 @@ function App(props){
               </Route>
               <PrivateRoute name="devtools" path="/devtools" component={DevPage} />
               <Route name="login" path="/auth/login" component={LoginPage}/>
+              <Route name="signup" path="/auth/signup" component={SignUpPage}/>
             </switch>
             <Footer />
           </div>

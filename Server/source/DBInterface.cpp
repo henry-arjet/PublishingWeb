@@ -52,6 +52,49 @@ void insertionSort(vector <sortObject>& objects) { //modifies the input vector
 	}
 }
 
+User DBInterface::pullUser(const uint32_t& id) {
+	Table table = db->getTable("users");
+	RowResult res = table.select().where("id = " + id).execute();
+
+	Row row = res.fetchOne();
+	User ret;
+	ret.id = id;
+	ret.username = (std::string)row.get(1);
+	memcpy(ret.hash, row.get(2).getRawBytes().begin(), 32);
+	memcpy(ret.salt, row.get(3).getRawBytes().begin(), 32);
+	ret.privilege = row.get(4);
+}
+uint32_t DBInterface::findUser(const std::string& username) {
+	cout << "Find him" << endl;
+	uint ret = 0; //returns as 0 if not found
+	Table table = db->getTable("users");
+	cout << "Got table" << endl;
+	RowResult res;
+	res = table.select().where("username = '" + username + "'").execute();
+	cout << "Got results" << endl;
+	if (res.count() > 0) {
+		ret = res.fetchOne().get(0);
+	}
+	cout << "returning " << ret << endl;
+	return ret;
+}
+bool DBInterface::addUser(const User& user) {
+	Table table = db->getTable("users");
+	try{
+		table.insert().values(Value(), user.username, *user.hash, *user.salt, user.privilege).execute();
+		return true;
+	}catch (const mysqlx::Error& err) {
+		cout << "ERROR: " << err << endl;
+		return false;
+	}catch (std::exception& ex) {
+		cout << "STD EXCEPTION: " << ex.what() << endl;
+		return false;
+	}catch (const char* ex) {
+		cout << "EXCEPTION: " << ex << endl;
+		return false;
+	}
+}
+
 bool DBInterface::updateStory(Story story){
 	Table table = db->getTable("test1");
 	try {
@@ -85,18 +128,15 @@ bool DBInterface::addStory(Story story) {
 		return true;
 	}
 
-	catch (const mysqlx::Error& err)
-	{
+	catch (const mysqlx::Error& err){
 		cout << "ERROR: " << err << endl;
 		return false;
 	}
-	catch (std::exception& ex)
-	{
+	catch (std::exception& ex){
 		cout << "STD EXCEPTION: " << ex.what() << endl;
 		return false;
 	}
-	catch (const char* ex)
-	{
+	catch (const char* ex){
 		cout << "EXCEPTION: " << ex << endl;
 		return false;
 	}

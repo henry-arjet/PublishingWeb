@@ -1,7 +1,12 @@
-
 #include <iostream>
 #include <fstream>
 
+#if defined(WIN32)
+#include <windows.h>
+#endif
+
+#include <cryptopp/sha.h>
+#include <cryptopp/osrng.h>
 
 #include <cpprest/http_client.h>
 #include <cpprest/filestream.h>
@@ -9,15 +14,11 @@
 #include <cpprest/details/http_helpers.h>
 #include <cpprest/json.h>
 
-
 #include <arjet/DBInterface.h>
-
-
 
 using std::cout;
 using std::endl;
 using std::string;
-
 
 using web::http::status_codes;
 using web::http::http_request;
@@ -45,7 +46,7 @@ void updateStory(http_request const& req);
 void handlePut(http_request const& req);
 void handleDbPut(http_request const& req, vector<std::wstring> tokens);
 void addStory(http_request const& req);
-
+void handleSignup(http_request const& req);
 
 void createContentMap() {
     m_htmlcontentmap[U("/")] = std::make_tuple(distFolder+U("index.html"), U("text/html"));
@@ -60,7 +61,6 @@ void handle_error(pplx::task<void>& t) {
     }
     catch (...){}
 }
-
 
 struct queryItem {
     string key;
@@ -93,7 +93,14 @@ Story JSONToStory(value obj) { //NOT safe. Must make safe elsewhere
     return story;
 }
 
-
+UserClear JSONToUserClear(value obj) {
+    UserClear user;
+    user.id = 0;
+    user.username = utility::conversions::utf16_to_utf8(obj[L"username"].as_string());
+    user.password = utility::conversions::utf16_to_utf8(obj[L"password"].as_string());
+    user.privilege = 0;
+    return user;
+}
 
 void handleGet(http_request const& req) {
 
@@ -201,7 +208,6 @@ void handleGetFile(http_request const& req) {
     });
 }
 
-
 void handlePost(http_request const& req) {
 
     auto path = req.relative_uri().to_string();
@@ -291,6 +297,9 @@ void handlePut(http_request const& req) {
     if ((tokens[0]) == L"db") {
         handleDbPut(req, tokens);
     }
+    else if (tokens[0] == L"auth") {
+        handleSignup(req);
+    }
     else req.reply(404);
 
 }
@@ -312,7 +321,6 @@ void addStory(http_request const& req) {
     story.id = 0; //Not used. Set to 0 to flag as error.
 
     story = JSONToStory(req.extract_json().get());
-    cout << "TEST2" << endl;
 
     if (dbp->addStory(story) == true) {
         req.reply(201);//HTTP Created
@@ -320,6 +328,44 @@ void addStory(http_request const& req) {
     else {
         req.reply(500);
         cout << "ERROR: failed to add to database" << endl;
+    }
+}
+
+void handleSignup(http_request const& req) {
+    UserClear userClear;
+    userClear = JSONToUserClear(req.extract_json().get());
+    if (dbp->findUser(userClear.username) != 0) {
+        cout << "Failed to add user, already exists" << endl;
+        req.reply(409U);//conflict
+        return;
+    }
+    cout << "Let's do some crypto!" << endl;
+    using CryptoPP::byte;
+
+    CryptoPP::SHA256 sha;
+    sha.Update((const byte*)userClear.password.data(), userClear.password.size());
+
+    byte* salt = static_cast<byte*>(malloc(32));//256 bytes
+    CryptoPP::NonblockingRng rnjesus = CryptoPP::NonblockingRng();
+    rnjesus.GenerateBlock(salt, 32);
+    sha.Update(salt, 32);
+    byte* hash = static_cast<byte*>(malloc(32));
+    sha.Final(hash);
+
+    User user;
+    user.id = 0; //Will be replaced by autoincrement
+    user.username = userClear.username;
+    user.hash = hash;
+    user.salt = salt;
+    user.privilege = 0;
+    free(salt); free(hash);
+
+    if (dbp->addUser(user)) {
+        req.reply(201U);
+        return;
+    }else {
+        req.reply(500U);
+        return;
     }
 }
 
@@ -332,7 +378,7 @@ int main()
 
     handleGetQueryID(http_request(), 6);
 
-    const std::wstring base_url = U("http://localhost:8080");
+    const std::wstring base_url = U("http://*:8080");
 
 
     web::http::experimental::listener::http_listener listener(base_url);

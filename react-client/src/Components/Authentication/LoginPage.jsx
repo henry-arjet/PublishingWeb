@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { Link, Redirect } from "react-router-dom";
-import axios from 'axios';
-import logoImg from "../img/logo.jpg";
-import { Card, Logo, Form, Input, Button, Error } from "../components/AuthForms";
-import { useAuth } from "../context/auth";
+import { useAuth } from "../Context/Auth";
+import { LinkContainer } from 'react-router-bootstrap';
+import Nav from 'react-bootstrap/Nav';
 
-function Login() {
+function LoginPage() {
   const [isLoggedIn, setLoggedIn] = useState(false);
   const [isError, setIsError] = useState(false);
   const [userName, setUserName] = useState("");
@@ -13,10 +12,8 @@ function Login() {
   const { setAuthTokens } = useAuth();
 
   function postLogin() {
-    axios.post(window.location.origin + "/auth/login", {
-      userName,
-      password
-    }).then(result => {
+    fetch(indow.location.origin + "/auth/login", {method: "POST"})
+    .then(result => {
       if (result.status === 200) {
         setAuthTokens(result.data);
         setLoggedIn(true);
@@ -25,6 +22,7 @@ function Login() {
       }
     }).catch(e => {
       setIsError(true);
+      console.log(e)
     });
   }
 
@@ -32,6 +30,13 @@ function Login() {
     return <Redirect to="/" />;
   }
   return(
-    <p>bro you should, like, log in</p>
+    <div>
+      <p>bro you should, like, log in</p>
+      <LinkContainer to="/auth/signup"><Nav.Link className="headerNavButton">
+        Don't have an account?  
+      </Nav.Link></LinkContainer>
+    </div>
   );
 }
+
+export default LoginPage;

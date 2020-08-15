@@ -16,6 +16,20 @@ struct Story {
 	uint32_t rating;
 	uint32_t views;
 };
+struct User {
+	uint32_t id;
+	std::string username;
+	unsigned char* hash;
+	uint32_t privilege;
+	unsigned char* salt;
+};
+struct UserClear{//Used for holding the user in cleartext
+	//SHOULD NEVER BE WRITTEN TO STORAGE
+	uint32_t id;
+	std::string username;
+	std::string password;
+	uint32_t privilege;
+};
 class DBInterface {
 public:
 	
@@ -26,9 +40,12 @@ public:
 
 	Story pullStoryInfo(const uint32_t& id); //Pulls the db info for a single story by id
 
+	User pullUser(const uint32_t& id);
+	uint32_t findUser(const std::string& username); //searches for a user in database, returns id if found or 0 if not
+	bool addUser(const User& user);
+
 	bool updateStory(Story story);//returns true on success, false on fail
 	bool addStory(Story story);//returns true on success, false on fail
-
 
 	void sortTopRated(); //updates the topRated list stored in lists/top_rated.uil;
 	vector<Story> pullTopRated(std::string where = "", uint32_t offset = 0, uint32_t limit = uint32_t(20)); //Pulls results from the database using the toprated list
