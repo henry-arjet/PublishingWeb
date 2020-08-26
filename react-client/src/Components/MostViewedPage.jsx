@@ -9,7 +9,8 @@ class MostViewedPage extends Component {
       gotResults: false,
     };
     //this.state.results = "5";
-    const promise = fetch(window.location.protocol + "//" + window.location.host + '/results/?o=mv').then(response => response.json()).then(data => this.setState({results: data, gotResults: true}));
+    const promise = fetch(window.location.protocol + "//" + window.location.host + '/results/?o=mv')
+      .then(response => response.json()).then(data => this.setState({results: data, gotResults: true}));
   }
   render() {
     if(this.state.gotResults==true){
@@ -18,7 +19,6 @@ class MostViewedPage extends Component {
       )
     } else return(
       <div>
-        <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
         <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
         <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
       </div>

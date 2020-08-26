@@ -9,7 +9,6 @@ class StoryPage extends Component {
           results: [],
           gotResults: false,
         };
-        //fetch(useLocation().pathname + "?id=" + idString).then(response => response.json()).then(data => this.setState({results: data, gotResults: true}));
     }
     componentDidMount(){
         let idString = window.location.pathname.substring(window.location.pathname.lastIndexOf("/")+1);

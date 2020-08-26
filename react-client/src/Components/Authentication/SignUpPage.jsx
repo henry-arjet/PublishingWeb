@@ -1,10 +1,13 @@
-import React, { Component } from 'react';
+import React from 'react';
+import Container from 'react-bootstrap/Container'
 import SignUpForm from './SignUpForm'
 
 function SignUpPage(){
 
     return(
-        <SignUpForm />
+        <Container className="page">
+            <SignUpForm />
+        </Container>
     );
 
 }

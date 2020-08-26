@@ -37,7 +37,6 @@ struct sortObject { //key/value uints
 	uint32_t key;
 };
 
-
 void insertionSort(vector <sortObject>& objects) { //modifies the input vector
 	int i, j;
 	for (i = 1; i < objects.size(); i++) {
@@ -54,52 +53,56 @@ void insertionSort(vector <sortObject>& objects) { //modifies the input vector
 
 User DBInterface::pullUser(const uint32_t& id) {
 	Table table = db->getTable("users");
-	RowResult res = table.select().where("id = " + id).execute();
+	RowResult res = table.select().where("id = '" + std::to_string(id) + "'").execute();
 
 	Row row = res.fetchOne();
-	User ret;
+	User ret = User();
 	ret.id = id;
 	ret.username = (std::string)row.get(1);
 	memcpy(ret.hash, row.get(2).getRawBytes().begin(), 32);
 	memcpy(ret.salt, row.get(3).getRawBytes().begin(), 32);
 	ret.privilege = row.get(4);
+	return ret;
 }
+
 uint32_t DBInterface::findUser(const std::string& username) {
-	cout << "Find him" << endl;
 	uint ret = 0; //returns as 0 if not found
 	Table table = db->getTable("users");
-	cout << "Got table" << endl;
 	RowResult res;
 	res = table.select().where("username = '" + username + "'").execute();
-	cout << "Got results" << endl;
 	if (res.count() > 0) {
 		ret = res.fetchOne().get(0);
 	}
-	cout << "returning " << ret << endl;
 	return ret;
 }
-bool DBInterface::addUser(const User& user) {
+
+uint32_t DBInterface::addUser(const User& user) {
 	Table table = db->getTable("users");
 	try{
-		table.insert().values(Value(), user.username, *user.hash, *user.salt, user.privilege).execute();
-		return true;
+		table.insert().values(Value(), user.username, bytes(user.hash, 32), bytes(user.salt, 32), user.privilege).execute();
+		//now to find the last inserted id
+		Row row = table.select("LAST_INSERT_ID()").execute().fetchOne();
+		cout << "LAST_INSERT_ID: " << row.get(0) << endl;
+		return row.get(0);
 	}catch (const mysqlx::Error& err) {
 		cout << "ERROR: " << err << endl;
-		return false;
+		return 0;
 	}catch (std::exception& ex) {
 		cout << "STD EXCEPTION: " << ex.what() << endl;
-		return false;
+		return 0;
 	}catch (const char* ex) {
 		cout << "EXCEPTION: " << ex << endl;
-		return false;
+		return 0;
 	}
 }
+
 
 bool DBInterface::updateStory(Story story){
 	Table table = db->getTable("test1");
 	try {
 		std::string s = "id = " + std::to_string(story.id);
-		table.update().set("title", story.title).set("path", story.path).set("rating", story.rating).set("views", story.views)
+		table.update().set("title", story.title).set("path", story.path).set("rating", story.rating)
+			.set("views", story.views).set("author_id", story.authorID).set("permission", story.permission)
 			.where(s).execute(); //reset the hit detector
 		return true;
 	}
@@ -124,7 +127,7 @@ bool DBInterface::updateStory(Story story){
 bool DBInterface::addStory(Story story) {
 	Table table = db->getTable("test1");
 	try {
-		table.insert().values(Value(), story.title, story.path, story.rating, story.views, 0).execute();
+		table.insert().values(Value(), story.title, story.path, story.rating, story.views, 0, story.authorID, story.permission).execute();
 		return true;
 	}
 
@@ -273,13 +276,13 @@ vector<Story> pullList(std::string path, std::string where, uint32_t offset, uin
 	Table table = db->getTable("test1");
 	uint rSize = readList.size();
 	for (uint i = 0; i < limit; i++) {//for each item in the top rated list
-		if (i + offset > rSize) {//break the loop if we've run out of items in the list
+		if (i + offset >= rSize) {//break the loop if we've run out of items in the list
 			break;
 		}
 		RowResult res = table.select().where("id = " + std::to_string(readList[i + offset])).execute();
 		if (res.count()) { //If the catagories match and therefore we got a hit
 			Row row = res.fetchOne();
-			Story story = { row.get(0), (std::string)row.get(1), (std::string)row.get(2), row.get(3), row.get(4) };//add result to return vector
+			Story story = { row.get(0), (std::string)row.get(1), (std::string)row.get(2), row.get(3), row.get(4), row.get(6), (unsigned int)row.get(7) };//add result to return vector
 			ret.push_back(story);
 		}
 		else limit++;//we didn't add a value, so we'll add one more to the limit
@@ -306,7 +309,8 @@ Story DBInterface::pullStoryInfo(const uint32_t& id) {
 	ret.path = (std::string)row.get(2);
 	ret.rating = row.get(3);
 	ret.views = row.get(4);
-
+	ret.authorID = row.get(6);
+	ret.permission = (unsigned int)row.get(7);
 
 	return ret;
 

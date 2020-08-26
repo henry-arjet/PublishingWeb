@@ -40,6 +40,25 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('production')
     }),
-    new webpack.optimize.ModuleConcatenationPlugin()
+    new webpack.optimize.ModuleConcatenationPlugin(),
+    new webpack.LoaderOptionsPlugin({
+			options: {
+				loaders: [
+					{
+						test: require.resolve('tinymce/tinymce'),
+						use: [
+							'imports-loader?this=>window',
+							'exports-loader?window.tinymce',
+						]
+					},
+					{
+						test: /tinymce\/(themes|plugins)\//,
+						use: [
+							'imports-loader?this=>window'
+						]
+					},
+				],
+			}
+		})
   ]
 };

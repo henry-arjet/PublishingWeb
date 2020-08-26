@@ -25,23 +25,27 @@ using web::http::http_request;
 
 using namespace web::json;
 
-// m_htmlcontentmap contains data about the html contents of the website, their mime types
-// key: relative URI path of the HTML content being requested
-// value: Tuple where:
-// Element1: relative path on the disk of the file being requested
-// Element2: Mime type/content type of the file
-std::map<utility::string_t, std::tuple<utility::string_t, utility::string_t>> m_htmlcontentmap;
+using CryptoPP::byte;
+
+//contentMap relates file extentions to mime types 
+std::unordered_map<utility::string_t, utility::string_t> contentMap;
+
 std::wstring distFolder = L"../react-client/dist/"; //the folder where react builds to
-DBInterface *dbp; //can do this as db is created in main
+DBInterface *dbp; //pointer to the DBInterface class created in main()
 
 void handleGet(http_request const& req);
 void handleGetQuery(http_request const& req);
-void handleGetQueryID(http_request const& req, const uint32_t& id);
+void handleGetQueryResults(http_request const& req, std::map<utility::string_t, utility::string_t> queries);
+void handleGetQueryStory(http_request const& req, const uint32_t& id);
+void handleGetQueryProfile(http_request const& req, const uint32_t& id);
 void handleGetFile(http_request const& req);
+void handleGetRoot(http_request const& req);
 
 void handlePost(http_request const& req);
 void handleDbPost(http_request const& req, vector<std::wstring> tokens);
 void updateStory(http_request const& req);
+void handleLogin(http_request const& req);
+
 
 void handlePut(http_request const& req);
 void handleDbPut(http_request const& req, vector<std::wstring> tokens);
@@ -49,10 +53,9 @@ void addStory(http_request const& req);
 void handleSignup(http_request const& req);
 
 void createContentMap() {
-    m_htmlcontentmap[U("/")] = std::make_tuple(distFolder+U("index.html"), U("text/html"));
-    m_htmlcontentmap[U("/bundle.js")] = std::make_tuple(distFolder + U("bundle.js"), U("application/javascript"));
-    m_htmlcontentmap[U("/styles.css")] = std::make_tuple(distFolder + U("styles.css"), U("text/css"));
-
+    contentMap[U(".html")] = U("text/html");
+    contentMap[U(".js")] = U("application/javascript");
+    contentMap[U(".css")] = U("text/css");
 }
 
 void handle_error(pplx::task<void>& t) {
@@ -74,8 +77,11 @@ value storyToJSON(const Story& story){
     obj[L"path"] = value::string(utility::conversions::utf8_to_utf16(story.path));
     obj[L"rating"] = value::number(story.rating);
     obj[L"views"] = value::number(story.views);
+    obj[L"authorID"] = value::number(story.authorID);
+    obj[L"permission"] = value::number(story.permission);
     return obj;
 }
+
 Story JSONToStory(value obj) { //NOT safe. Must make safe elsewhere
 
     Story story;
@@ -88,8 +94,10 @@ Story JSONToStory(value obj) { //NOT safe. Must make safe elsewhere
 
     story.title = utility::conversions::utf16_to_utf8(obj[L"title"].as_string());
     story.path = utility::conversions::utf16_to_utf8(obj[L"path"].as_string());
-    story.rating = std::stoi(obj[L"rating"].as_string());
-    story.views = std::stoi(obj[L"views"].as_string());
+    story.rating = stoi(obj[L"rating"].as_string());
+    story.views = stoi(obj[L"views"].as_string());
+    story.authorID = stoi(obj[L"authorID"].as_string());
+    story.permission = stoi(obj[L"permission"].as_string());
     return story;
 }
 
@@ -102,6 +110,75 @@ UserClear JSONToUserClear(value obj) {
     return user;
 }
 
+void outputHash(const unsigned char* hash, std::wstring message, size_t size = 32) {
+    //turns a byte * into a byte vector into base64, then outputs it
+    std::vector<unsigned char> vec(size);
+    memcpy(vec.data(), hash, size);
+    std::wstring str = utility::conversions::to_base64(vec);
+    std::wcout << message << str << endl;
+}
+
+bool compareHashes(const byte* hash1, const byte* hash2, const size_t size = 32) {  //I should multithread this. Maybe
+    for (int i = 0; i < size; i++) {
+        if (hash1[i] != hash2[i]) return false;
+    }
+    return true;
+}
+
+value UserClearToJSON( UserClear user) {//replies to a login/signup request with the authTokens for the client to use
+    value obj = value::object();
+    obj[L"id"] = user.id;
+    obj[L"username"] = value(utility::conversions::utf8_to_utf16(user.username));
+    obj[L"password"] = value(utility::conversions::utf8_to_utf16(user.password));
+    obj[L"privilege"] = user.privilege;
+    return obj;
+}
+
+uint32_t handleAuthentication(http_request const& req, uint32_t privRequired) {//This function verifies the authentication of the header, and returns the id
+    //THIS FUNCTION REPLIES ON FAILURE. DO NOT REPLY TWICE;
+    web::http::http_headers headers = req.headers();
+    if (!headers.has(L"Authorization")) {
+        req.reply(401U);
+        return 0; 
+    } //make sure this is something to authenticate
+
+    
+    std::wstring authstringRaw = headers[L"Authorization"];
+    std::wstring authString64W = authstringRaw.substr(6);
+    
+    auto data = utility::conversions::from_base64(authString64W);
+    string authString = reinterpret_cast<char*>(data.data());
+    authString.resize(data.size());//cause it doesn't know when to end
+    
+    size_t delim = authString.find_first_of(':');
+    uint32_t id = stoi(authString.substr(0, delim));
+    string pass = authString.substr(delim + 1);
+
+    User user = dbp->pullUser(id);
+    CryptoPP::SHA256 sha;
+    sha.Update((const byte*)pass.data(), pass.size());
+    sha.Update(user.salt, 32);
+    byte* hash = static_cast<byte*>(malloc(32));
+    sha.Final(hash);
+    if (!compareHashes(hash, user.hash)) {
+        req.reply(403U);
+        free(hash);
+        return(0);
+    }
+    else if(privRequired){
+        if (dbp->pullUser(id).privilege < privRequired) {
+            req.reply(403U);
+            return(0);
+        }
+
+    }
+    return id;
+}
+
+wstring getContentType(wstring path){
+
+}
+
 void handleGet(http_request const& req) {
 
     auto path = req.relative_uri().to_string();
@@ -110,21 +187,51 @@ void handleGet(http_request const& req) {
     if (req.relative_uri().query().size() != 0) { //yes yes I know != 0 is unnecessary but it's easier to read
         handleGetQuery(req);
     }
-    else handleGetFile(req);//I can get away with this
+    else if (req.relative_uri().path().find_last_of(L'.') != std::wstring::npos) {
+        handleGetFile(req);
+    }
+    else {
+        handleGetRoot(req);
+    }
 }
 
-void handleGetQuery(http_request const& req) {//For pulling ordered stories from the db
-    auto queries = web::uri::split_query(req.relative_uri().query()); //I wrote an entire function for this before realizing there was an inbuilt.
+void handleGetQuery(http_request const& req) {//For pulling from the db
+    //break path into tokens
+    //TODO clean this tf up
+    //Also move to its own function
+    vector<std::wstring> tokens;
+    wchar_t* pathC = (wchar_t*)req.absolute_uri().path().c_str();
+    wchar_t* del = (wchar_t*)L"/";
+    wchar_t* helperPtr;
+    wchar_t* token = wcstok_s(pathC, del, &helperPtr);
+    while (token != NULL)
+    {
+        tokens.push_back(token);
+        token = wcstok_s(nullptr, del, &helperPtr);
+    }
+    if (tokens.size() == 0) { req.reply(404U); }
+    auto queries = web::uri::split_query(req.relative_uri().query());
+    if (tokens[0] == L"users") {
+        handleGetQueryProfile(req, std::stoi(queries[L"id"]));
+    }
+    else if (tokens[0] == L"results") {
+        handleGetQueryResults(req, queries);
+    }
+    else if (tokens[0] == L"story") {
+        handleGetQueryStory(req, stoi(queries[L"id"]));
+    }
+    else req.reply(404U);
+}
 
+void handleGetQueryResults(http_request const& req, std::map<utility::string_t, utility::string_t> queries){
     //I know this pattern sucks. But it should work
     if (queries.find(L"id") != queries.end()) {
         //Basically this function is dedicated to searching, but it triggers on any query. So, I want to have the get request for a specific
         //story be query based. So, I put a little hook in the beginning that diverts the request to a different function
         //if it is asking for a specific story. It's jank AF, but...
-        handleGetQueryID(req, std::stoi(queries[L"id"]));
+        handleGetQueryStory(req, std::stoi(queries[L"id"]));
         return;
     }
-
     vector<Story> stories;
 
     string where = "";
@@ -158,7 +265,7 @@ void handleGetQuery(http_request const& req) {//For pulling ordered stories from
     req.reply(status_codes::OK, arr);
 }
 
-void handleGetQueryID(http_request const& req, const uint32_t& id) {
+void handleGetQueryStory(http_request const& req, const uint32_t& id) {
     //Triggers if a query is called that mentions id. Pulls the specific story and sends the story along with the database entry as a JSON
     Story story = dbp->pullStoryInfo(id);
     value storyJSON = storyToJSON(story);
@@ -180,19 +287,24 @@ void handleGetQueryID(http_request const& req, const uint32_t& id) {
     req.reply(200U, obj);
 }
 
-void handleGetFile(http_request const& req) {
-    auto path = req.relative_uri().path().substr(req.relative_uri().path().find_last_of('/'));
-    auto content_data = m_htmlcontentmap.find(path);
-    //std::wcout << L"Searching for file at " << path << endl;
-    if (content_data == m_htmlcontentmap.end()) { //Cant find file, most likely should be handeld client side by router
-        content_data = m_htmlcontentmap.find(L"/");//Give home to client and let react-router figure it out
-    }
-    auto file_name = std::get<0>(content_data->second);
-    auto content_type = std::get<1>(content_data->second);
+void handleGetQueryProfile(http_request const& req, const uint32_t& id) {
+    cout << handleAuthentication(req, 0) << endl;
+}
 
-    concurrency::streams::fstream::open_istream(file_name, std::ios::in)
+void handleGetFile(http_request const& req) {
+    auto path = distFolder + req.relative_uri().path();
+    auto extension = path.substr(path.find_last_of('.'));
+    auto content_type_it = contentMap.find(extension);
+    if (content_type_it == contentMap.end()) { //if the file isn't found
+        req.reply(404U);
+        return;
+    }
+    wstring content_type = content_type_it->second;
+
+
+    concurrency::streams::fstream::open_istream(path, std::ios::in)
         .then([=](concurrency::streams::istream is) {
-        req.reply(status_codes::OK, is, content_type).then([](pplx::task<void> t) { handle_error(t); });
+        req.reply(200U, is, content_type).then([](pplx::task<void> t) { handle_error(t); });
     })
         .then([=](pplx::task<void> t) {
         try
@@ -203,9 +315,15 @@ void handleGetFile(http_request const& req) {
         {
             // opening the file (open_istream) failed.
             // Reply with an error.
-            req.reply(status_codes::InternalError).then([](pplx::task<void> t) { handle_error(t); });
+            req.reply(404U).then([](pplx::task<void> t) { handle_error(t); });
         }
     });
+}
+
+void handleGetRoot(http_request const& req) {
+    concurrency::streams::fstream::open_istream(distFolder + L"index.html", std::ios::in)
+        .then([=](concurrency::streams::istream is) {
+        req.reply(status_codes::OK, is, L"text/html"); });
 }
 
 void handlePost(http_request const& req) {
@@ -218,7 +336,6 @@ void handlePost(http_request const& req) {
     wchar_t* pathC = (wchar_t*)path.c_str();
     wchar_t* del = (wchar_t*)L"/";
     wchar_t* helperPtr;
-    //rsize_t strmax = path.size();
     wchar_t* token = wcstok_s(pathC, del, &helperPtr);
     while (token != NULL)
     {
@@ -230,14 +347,28 @@ void handlePost(http_request const& req) {
     if ((tokens[0]) == L"db") {
         handleDbPost(req, tokens);
     }
+    else if (tokens[0] == L"auth") {
+        handleLogin(req);
+    }
     else req.reply(404);
 }
 
 void handleDbPost(http_request const& req, vector<std::wstring> tokens) {
+    if (!handleAuthentication(req, 1)) {
+        return; //handleAuthentication takes care of the reply
+    }
     //Switches can SMD
     if (tokens[1] == L"resort") {
-        if (tokens[2] == L"toprated") { dbp->sortTopRated(); req.reply(200); return; }
-        else if (tokens[2] == L"mostviewed") { dbp->sortMostViewed(); req.reply(200); return; }
+        if (tokens[2] == L"toprated") { 
+            dbp->sortTopRated();
+            req.reply(200); 
+            return; 
+        }
+        else if (tokens[2] == L"mostviewed") { 
+            dbp->sortMostViewed(); 
+            req.reply(200); 
+            return; 
+        }
     }
     else if (tokens[1] == L"update") {
         if (tokens[2] == L"story") {
@@ -249,9 +380,8 @@ void handleDbPost(http_request const& req, vector<std::wstring> tokens) {
 }
 
 void updateStory(http_request const& req) {
-    Story story;
 
-    //stream >> v;
+    Story story;
     try {
         value v = req.extract_json().get();
         story = JSONToStory(v);
@@ -264,6 +394,8 @@ void updateStory(http_request const& req) {
         cout << "STD EXCEPTION: " << ex.what() << endl;
         throw;
     }
+
+
     if (dbp->updateStory(story) == true) {
         req.reply(200);
     }
@@ -273,6 +405,26 @@ void updateStory(http_request const& req) {
     }
 }
 
+void handleLogin(http_request const& req) {
+    //get who we're attempting to log in
+    UserClear userClear = JSONToUserClear(req.extract_json().get());
+    userClear.id = dbp->findUser(userClear.username);
+    if (userClear.id == 0) { req.reply(401U); } //can't find user
+    User user = dbp->pullUser(userClear.id);
+    userClear.privilege = user.privilege; //for replying with a privilege level
+
+    CryptoPP::SHA256 sha;
+    sha.Update((const byte*)userClear.password.data(), userClear.password.size());
+    sha.Update(user.salt, 32);
+    byte* hash = static_cast<byte*>(malloc(32));
+    sha.Final(hash);
+    if (compareHashes(hash, user.hash)) {
+        req.reply(200U, UserClearToJSON(userClear));
+    }
+    else req.reply(401U);
+    free(hash);//I may be a student, but at least I free my memory
+    return;
+}
 
 void handlePut(http_request const& req) {
 
@@ -312,16 +464,27 @@ void handleDbPut(http_request const& req, vector<std::wstring> tokens) {
             addStory(req);
         }
     }
-else req.reply(404);
+    else req.reply(404);
 }
 
 void addStory(http_request const& req) {
-
+    if (!handleAuthentication(req, 1)) {
+        cout << "Couldn't add story: failed authentication" << endl;
+        return;
+    }
     Story story;
     story.id = 0; //Not used. Set to 0 to flag as error.
-
-    story = JSONToStory(req.extract_json().get());
-
+    try {
+        story = JSONToStory(req.extract_json().get());
+    }
+    catch (web::json::json_exception& ex) {
+        cout << "JSON EXCEPTION: " << ex.what() << endl;
+        throw;
+    }
+    catch (std::exception& ex) {
+        cout << "STD EXCEPTION: " << ex.what() << endl;
+        throw;
+    }
     if (dbp->addStory(story) == true) {
         req.reply(201);//HTTP Created
     }
@@ -339,29 +502,22 @@ void handleSignup(http_request const& req) {
         req.reply(409U);//conflict
         return;
     }
-    cout << "Let's do some crypto!" << endl;
-    using CryptoPP::byte;
 
     CryptoPP::SHA256 sha;
     sha.Update((const byte*)userClear.password.data(), userClear.password.size());
 
-    byte* salt = static_cast<byte*>(malloc(32));//256 bytes
-    CryptoPP::NonblockingRng rnjesus = CryptoPP::NonblockingRng();
-    rnjesus.GenerateBlock(salt, 32);
-    sha.Update(salt, 32);
-    byte* hash = static_cast<byte*>(malloc(32));
-    sha.Final(hash);
-
-    User user;
-    user.id = 0; //Will be replaced by autoincrement
+    User user = User();
     user.username = userClear.username;
-    user.hash = hash;
-    user.salt = salt;
     user.privilege = 0;
-    free(salt); free(hash);
 
-    if (dbp->addUser(user)) {
-        req.reply(201U);
+    CryptoPP::NonblockingRng rnjesus = CryptoPP::NonblockingRng();
+    rnjesus.GenerateBlock(user.salt, 32);//256 bytes
+    sha.Update(user.salt, 32); //user.salt and user.hash were already allocated by User() and will be freed at destruction
+    sha.Final(user.hash);
+
+    userClear.id = dbp->addUser(user);
+    if (userClear.id != 0) { //success
+        req.reply(201U, UserClearToJSON(userClear));
         return;
     }else {
         req.reply(500U);
@@ -370,13 +526,9 @@ void handleSignup(http_request const& req) {
 }
 
 
-int main()
-{
+int main(){
     //start sql connection first
-    DBInterface db = DBInterface("70.113.85.67", 33060, "app", "xH8#N7GmtILb", "website");
-    
-
-    handleGetQueryID(http_request(), 6);
+    DBInterface db = DBInterface("54.242.214.211", 33060, "app", "xH8#N7GmtILb", "website");
 
     const std::wstring base_url = U("http://*:8080");
 
@@ -416,5 +568,3 @@ int main()
 
     listener.close().wait();
 }
-
-

@@ -18,6 +18,7 @@
     "@babel/preset-es2015": "^7.0.0-beta.53",
     "@babel/preset-react": "^7.10.4",
     "@material-ui/core": "^4.11.0",
+    "@tinymce/tinymce-react": "^3.6.0",
     "babel": "^6.23.0",
     "babel-core": "^6.26.3",
     "babel-loader": "^8.1.0",
@@ -35,9 +36,12 @@
     "react-router": "^5.2.0",
     "react-router-bootstrap": "^0.25.0",
     "react-router-dom": "^5.2.0",
-    "style-loader": "^1.2.1"
+    "style-loader": "^1.2.1",
+    "tinymce": "^5.4.2"
   },
   "devDependencies": {
+    "exports-loader": "^1.1.0",
+    "imports-loader": "^1.1.0",
     "sass": "^1.26.10",
     "sass-loader": "^9.0.3",
     "webpack": "^4.44.1",

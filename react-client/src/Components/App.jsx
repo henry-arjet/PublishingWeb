@@ -1,5 +1,5 @@
-import React, { Component, useState } from 'react';
-import { BrowserRouter as Router, Route, Link} from 'react-router-dom';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Route } from 'react-router-dom';
 import HomePage from './HomePage';
 import NavBar from './HeaderComponent/NavBar';
 import Footer from './FooterComponent/Footer';
@@ -11,6 +11,7 @@ import {AuthContext} from "./Context/Auth";
 import PrivateRoute from "./PrivateRoute"
 import LoginPage from "./Authentication/LoginPage"
 import SignUpPage from './Authentication/SignUpPage';
+import UserPage from './User/UserPage';
 
 function App(props){
     const existingTokens = JSON.parse(localStorage.getItem("tokens"));
@@ -39,6 +40,7 @@ function App(props){
                 <StoryPage />
               </Route>
               <PrivateRoute name="devtools" path="/devtools" component={DevPage} />
+              <PrivateRoute name="userpage" path="/users/profile" component={UserPage} />
               <Route name="login" path="/auth/login" component={LoginPage}/>
               <Route name="signup" path="/auth/signup" component={SignUpPage}/>
             </switch>

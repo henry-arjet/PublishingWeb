@@ -8,6 +8,8 @@
 using std::cout;
 using std::endl;
 using std::vector;
+using std::wstring;
+using std::wcout;
 class Scheema;
 struct Story {
 	uint32_t id;
@@ -15,6 +17,8 @@ struct Story {
 	std::string path;
 	uint32_t rating;
 	uint32_t views;
+	uint32_t authorID;
+	unsigned char permission;
 };
 struct User {
 	uint32_t id;
@@ -22,6 +26,17 @@ struct User {
 	unsigned char* hash;
 	uint32_t privilege;
 	unsigned char* salt;
+	User() {
+		id = 0;
+		username = "";
+		hash = static_cast<unsigned char*>(malloc(32));
+		salt = static_cast<unsigned char*>(malloc(32));
+		uint32_t privilege = 0;
+	}
+	~User() {
+		free(hash);
+		free(salt);
+	}
 };
 struct UserClear{//Used for holding the user in cleartext
 	//SHOULD NEVER BE WRITTEN TO STORAGE
@@ -42,7 +57,7 @@ public:
 
 	User pullUser(const uint32_t& id);
 	uint32_t findUser(const std::string& username); //searches for a user in database, returns id if found or 0 if not
-	bool addUser(const User& user);
+	uint32_t addUser(const User& user); // returns ID upon success, 0 upon fail
 
 	bool updateStory(Story story);//returns true on success, false on fail
 	bool addStory(Story story);//returns true on success, false on fail
