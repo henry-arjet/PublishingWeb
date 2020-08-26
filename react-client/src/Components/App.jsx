@@ -12,6 +12,7 @@ import PrivateRoute from "./PrivateRoute"
 import LoginPage from "./Authentication/LoginPage"
 import SignUpPage from './Authentication/SignUpPage';
 import UserPage from './User/UserPage';
+import WritingPage from './WritingPage';
 
 function App(props){
     const existingTokens = JSON.parse(localStorage.getItem("tokens"));
@@ -43,6 +44,7 @@ function App(props){
               <PrivateRoute name="userpage" path="/users/profile" component={UserPage} />
               <Route name="login" path="/auth/login" component={LoginPage}/>
               <Route name="signup" path="/auth/signup" component={SignUpPage}/>
+              <Route name="writer" path="/users/writer" component={WritingPage}/>
             </switch>
             <Footer />
           </div>
