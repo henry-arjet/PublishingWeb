@@ -320,6 +320,28 @@ vector<Story> DBInterface::pullTopRated(std::string where, uint32_t offset, uint
 	return pullList("../lists/top_rated.uil", where, offset, limit);
 }
 
+vector<Story> DBInterface::pullUserStories(uint32_t id, uint32_t offset, uint32_t limit){
+	
+
+	vector<Story> ret;
+	ret.reserve(limit); //want to make sure we don't have empty values at the end if there aren't enough results. Thus we use reserve and pushBack
+
+	Table table = db->getTable("test1");
+	
+	RowResult res = table.select().where("author_id = " + std::to_string(id)).execute();
+	if (res.count()) { //If the catagories match and therefore we got a hit
+		
+		Row row = res.fetchOne();
+		while (row) {
+			Story story = { row.get(0), (std::string)row.get(1), (std::string)row.get(2), row.get(3), row.get(4), row.get(6), (unsigned int)row.get(7) };//add result to return vector
+			ret.push_back(story);
+			row = res.fetchOne();
+		}
+	}
+
+
+	return ret;
+}
 
 DBInterface::~DBInterface() {
 	delete db;

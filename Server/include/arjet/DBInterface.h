@@ -69,6 +69,7 @@ public:
 	void sortMostViewed();
 	vector<Story> pullMostViewed(std::string where = "", uint32_t offset = 0, uint32_t limit = uint32_t(20));
 
+	vector<Story> pullUserStories(uint32_t id, uint32_t offset = 0, uint32_t limit = uint32_t(20)); //Pulls results from the database matching user ID
 private:
 	void sortList(const std::string& path, unsigned int column);//helper function for sorting. Inputs are the path to the uil and the db column used for the key
 };

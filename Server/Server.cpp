@@ -15,6 +15,7 @@
 #include <cpprest/json.h>
 
 #include <arjet/DBInterface.h>
+#include <arjet/Sanitizer.h>
 
 using std::cout;
 using std::endl;
@@ -30,6 +31,8 @@ using CryptoPP::byte;
 //contentMap relates file extentions to mime types 
 std::unordered_map<utility::string_t, utility::string_t> contentMap;
 
+typedef std::map<utility::string_t, utility::string_t> QueryMap;
+
 std::wstring distFolder = L"../react-client/dist/"; //the folder where react builds to
 DBInterface *dbp; //pointer to the DBInterface class created in main()
 
@@ -37,7 +40,7 @@ void handleGet(http_request const& req);
 void handleGetQuery(http_request const& req);
 void handleGetQueryResults(http_request const& req, std::map<utility::string_t, utility::string_t> queries);
 void handleGetQueryStory(http_request const& req, const uint32_t& id);
-void handleGetQueryProfile(http_request const& req, const uint32_t& id);
+void handleGetQueryProfile(http_request const& req, QueryMap queries);
 void handleGetFile(http_request const& req);
 void handleGetRoot(http_request const& req);
 
@@ -134,7 +137,7 @@ value UserClearToJSON( UserClear user) {//replies to a login/signup request with
     return obj;
 }
 
-uint32_t handleAuthentication(http_request const& req, uint32_t privRequired) {//This function verifies the authentication of the header, and returns the id
+uint32_t handleAuthentication(http_request const& req, uint32_t privRequired = 0) {//This function verifies the authentication of the header, and returns the id
     //THIS FUNCTION REPLIES ON FAILURE. DO NOT REPLY TWICE;
     web::http::http_headers headers = req.headers();
     if (!headers.has(L"Authorization")) {
@@ -212,7 +215,7 @@ void handleGetQuery(http_request const& req) {//For pulling from the db
     if (tokens.size() == 0) { req.reply(404U); }
     auto queries = web::uri::split_query(req.relative_uri().query());
     if (tokens[0] == L"users") {
-        handleGetQueryProfile(req, std::stoi(queries[L"id"]));
+        handleGetQueryProfile(req, queries);
     }
     else if (tokens[0] == L"results") {
         handleGetQueryResults(req, queries);
@@ -224,14 +227,6 @@ void handleGetQuery(http_request const& req) {//For pulling from the db
 }
 
 void handleGetQueryResults(http_request const& req, std::map<utility::string_t, utility::string_t> queries){
-    //I know this pattern sucks. But it should work
-    if (queries.find(L"id") != queries.end()) {
-        //Basically this function is dedicated to searching, but it triggers on any query. So, I want to have the get request for a specific
-        //story be query based. So, I put a little hook in the beginning that diverts the request to a different function
-        //if it is asking for a specific story. It's jank AF, but...
-        handleGetQueryStory(req, std::stoi(queries[L"id"]));
-        return;
-    }
     vector<Story> stories;
 
     string where = "";
@@ -287,8 +282,35 @@ void handleGetQueryStory(http_request const& req, const uint32_t& id) {
     req.reply(200U, obj);
 }
 
-void handleGetQueryProfile(http_request const& req, const uint32_t& id) {
-    cout << handleAuthentication(req, 0) << endl;
+void handleGetQueryProfile(http_request const& req, QueryMap queries) {
+    uint32_t id = handleAuthentication(req);
+    if (!id) {
+        req.reply(401U);
+        return;
+    }
+
+    string where = "";
+    std::wstring sqltest = L"";
+
+    uint32_t lim = 20;
+    if (queries.find(L"lim") != queries.end()) {//results per page
+        lim = std::stoi(queries[L"lim"]);
+    }
+    uint32_t offset = 0;
+    if (queries.find(L"p") != queries.end()) {//which page
+        offset = lim * (std::stoi(queries[L"p"]) - 1);
+    }
+
+    vector<Story> stories = dbp->pullUserStories(id);
+
+    value arr = value::array();
+    for (int i = 0; i < stories.size(); i++) {
+        value temp = storyToJSON(stories[i]);
+        arr[i] = temp;
+    }
+
+    req.reply(status_codes::OK, arr);
+
 }
 
 void handleGetFile(http_request const& req) {
@@ -527,6 +549,10 @@ void handleSignup(http_request const& req) {
 
 
 int main(){
+    Sanitizer sanitizer;
+    sanitizer.SanitizeHTML("\<a onmouseover=alert(document.cookie)\>xxs link\</a\>");
+    cout << sanitizer.GetStr();
+
     //start sql connection first
     DBInterface db = DBInterface("54.242.214.211", 33060, "app", "xH8#N7GmtILb", "website");
 

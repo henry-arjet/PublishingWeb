@@ -29,5 +29,8 @@
     <ClInclude Include="include\arjet\DBInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\arjet\Sanitizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

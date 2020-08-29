@@ -71,7 +71,7 @@ function SignUpForm(){
             </Form.Group>
             <Form.Group controlId="password">
                 <Form.Label>Password</Form.Label>
-                <Form.Control required type="text" placeholder="Password"
+                <Form.Control required type="password" placeholder="Password"
                 value={formik.values.password}
                 onBlur={formik.handleBlur}
                 onChange={formik.handleChange}
@@ -85,7 +85,7 @@ function SignUpForm(){
             </Form.Group>
             <Form.Group controlId="password2">
                 <Form.Label>Re-enter Password</Form.Label>
-                <Form.Control required type="text" placeholder="You know the drill"
+                <Form.Control required type="password" placeholder="You know the drill"
                 value={formik.values.password2}
                 onBlur={formik.handleBlur}
                 onChange={formik.handleChange}

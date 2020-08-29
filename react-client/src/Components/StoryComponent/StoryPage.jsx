@@ -6,23 +6,23 @@ class StoryPage extends Component {
     constructor(props){
         super(props);
         this.state = {
-          results: [],
+          results: null,
           gotResults: false,
         };
     }
     componentDidMount(){
-        let idString = window.location.pathname.substring(window.location.pathname.lastIndexOf("/")+1);
-        fetch(window.location.pathname + "?id=" + idString).then(response => response.json()).then(data => this.setState({results: data, gotResults: true}));
+        fetch(window.location.pathname + ".html").then(response => response.text()).then(data => this.setState({results: data, gotResults: true}));
     }
+    outputResult(){
+      console.log(this.state.results);
+      return {__html: ('<h1>Remember: this is DANGEROUS</h1>' + this.state.results)};
+    }
+
     render() {
       if (this.state.gotResults == true){
         return (
           <Container className="page" >
-            <h2>{this.state.results.text.fullTitle}</h2>
-            <br/>
-            <text className="jsonOutput">
-              {this.state.results.text.chapter1}
-            </text>
+            <div dangerouslySetInnerHTML={this.outputResult()}/>
           </Container>
         )
       }

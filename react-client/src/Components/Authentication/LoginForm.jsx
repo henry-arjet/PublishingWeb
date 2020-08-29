@@ -68,7 +68,7 @@ function LoginForm(){
             </Form.Group>
             <Form.Group controlId="password">
                 <Form.Label>Password</Form.Label>
-                <Form.Control required type="text"
+                <Form.Control required type="password"
                 value={formik.values.password}
                 onBlur={formik.handleBlur}
                 onChange={formik.handleChange}
