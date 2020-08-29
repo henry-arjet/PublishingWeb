@@ -1,5 +1,4 @@
 #include <arjet/DBInterface.h>
-
 #include <mysqlx/xdevapi.h>
 using namespace mysqlx;
 
@@ -10,7 +9,6 @@ DBInterface::DBInterface(const std::string& host, uint32_t port, const std::stri
 	cout << "Creating session on " << host << ":" << port <<" for " << user << "..." << endl;
 	try {
 		sesh = new Session(host, port, user, pass, dbName);
-
 		db = new Schema(sesh->getDefaultSchema()); 
 							
 	}
@@ -30,6 +28,7 @@ DBInterface::DBInterface(const std::string& host, uint32_t port, const std::stri
 		throw;
 	}
 	cout << "Done" << endl;
+	semaphore.notify(); //sets the initial value of the semaphore to 1. It should never go above this.
 }
 
 struct sortObject { //key/value uints
@@ -53,7 +52,9 @@ void insertionSort(vector <sortObject>& objects) { //modifies the input vector
 
 User DBInterface::pullUser(const uint32_t& id) {
 	Table table = db->getTable("users");
+	semaphore.wait();
 	RowResult res = table.select().where("id = '" + std::to_string(id) + "'").execute();
+	semaphore.notify();
 
 	Row row = res.fetchOne();
 	User ret = User();
@@ -69,7 +70,9 @@ uint32_t DBInterface::findUser(const std::string& username) {
 	uint ret = 0; //returns as 0 if not found
 	Table table = db->getTable("users");
 	RowResult res;
+	semaphore.wait();
 	res = table.select().where("username = '" + username + "'").execute();
+	semaphore.notify();
 	if (res.count() > 0) {
 		ret = res.fetchOne().get(0);
 	}
@@ -79,18 +82,25 @@ uint32_t DBInterface::findUser(const std::string& username) {
 uint32_t DBInterface::addUser(const User& user) {
 	Table table = db->getTable("users");
 	try{
+		semaphore.wait();
 		table.insert().values(Value(), user.username, bytes(user.hash, 32), bytes(user.salt, 32), user.privilege).execute();
+		semaphore.notify();
 		//now to find the last inserted id
+		semaphore.wait();
 		Row row = table.select("LAST_INSERT_ID()").execute().fetchOne();
+		semaphore.notify();
 		cout << "LAST_INSERT_ID: " << row.get(0) << endl;
 		return row.get(0);
 	}catch (const mysqlx::Error& err) {
+		semaphore.notify();
 		cout << "ERROR: " << err << endl;
 		return 0;
 	}catch (std::exception& ex) {
+		semaphore.notify();
 		cout << "STD EXCEPTION: " << ex.what() << endl;
 		return 0;
 	}catch (const char* ex) {
+		semaphore.notify();
 		cout << "EXCEPTION: " << ex << endl;
 		return 0;
 	}
@@ -101,24 +111,29 @@ bool DBInterface::updateStory(Story story){
 	Table table = db->getTable("test1");
 	try {
 		std::string s = "id = " + std::to_string(story.id);
+		semaphore.wait();
 		table.update().set("title", story.title).set("path", story.path).set("rating", story.rating)
 			.set("views", story.views).set("author_id", story.authorID).set("permission", story.permission)
 			.where(s).execute(); //reset the hit detector
+		semaphore.notify();
 		return true;
 	}
 
 	catch (const mysqlx::Error& err)
 	{
+		semaphore.notify();
 		cout << "ERROR: " << err << endl;
 		return false;
 	}
 	catch (std::exception& ex)
 	{
+		semaphore.notify();
 		cout << "STD EXCEPTION: " << ex.what() << endl;
 		return false;
 	}
 	catch (const char* ex)
 	{
+		semaphore.notify();
 		cout << "EXCEPTION: " << ex << endl;
 		return false;
 	}
@@ -127,19 +142,24 @@ bool DBInterface::updateStory(Story story){
 bool DBInterface::addStory(Story story) {
 	Table table = db->getTable("test1");
 	try {
+		semaphore.wait();
 		table.insert().values(Value(), story.title, story.path, story.rating, story.views, 0, story.authorID, story.permission).execute();
+		semaphore.notify();
 		return true;
 	}
 
 	catch (const mysqlx::Error& err){
+		semaphore.notify();
 		cout << "ERROR: " << err << endl;
 		return false;
 	}
 	catch (std::exception& ex){
+		semaphore.notify();
 		cout << "STD EXCEPTION: " << ex.what() << endl;
 		return false;
 	}
 	catch (const char* ex){
+		semaphore.notify();
 		cout << "EXCEPTION: " << ex << endl;
 		return false;
 	}
@@ -171,7 +191,9 @@ void DBInterface::sortList(const std::string& path, unsigned int column) {
 
 	for (int i = 0; i < readList.size(); i++) {
 
+		semaphore.wait();
 		RowResult res = table.select().where("id = " + std::to_string(readList[i])).execute();
+		semaphore.notify();
 		Row row = res.fetchOne();
 
 		sortList[i].id = readList[i]; //since the id is what we selected by
@@ -180,29 +202,38 @@ void DBInterface::sortList(const std::string& path, unsigned int column) {
 
 	//and tag all the ones that I just got
 	for (int i = 0; i < readList.size(); i++) { //there's probably a better way
+		semaphore.wait();
 		table.update().set("hit", 1).where("id = " + std::to_string(readList[i])).execute();
+		semaphore.notify();
 	}
 
 	//pull unlisted new entries AT END
 	//These will be the entries that haven't previously been sorted
 	try {
+		semaphore.wait();
 		table.select().execute();
+		semaphore.notify();
 		//RowResult remainers = table.select().where("hit = false").execute();
 	}
 	catch (const mysqlx::Error& err) {
+		semaphore.notify();
 		cout << "ERROR: " << err << endl;
 		throw;
 	}
 	catch (std::exception& ex) {
+		semaphore.notify();
 		cout << "STD EXCEPTION: " << ex.what() << endl;
 		throw;
 	}
 	catch (const char* ex) {
+		semaphore.notify();
 		cout << "EXCEPTION: " << ex << endl;
 		throw;
 	}
 
+	semaphore.wait();
 	RowResult remainers = table.select().where("hit = 0").execute();
+	semaphore.notify();
 	auto rCount = remainers.count();
 	sortList.resize(sortList.size() + rCount); //adjust size to take the remainers into account
 
@@ -237,7 +268,9 @@ void DBInterface::sortList(const std::string& path, unsigned int column) {
 		file.write((char*)&sortList[i].id, 4);
 	}
 	file.close();
+	semaphore.wait();
 	table.update().set("hit", false).execute(); //reset the hit detector
+	semaphore.notify();
 }
 
 void DBInterface::sortMostViewed() {
@@ -249,7 +282,7 @@ void DBInterface::sortTopRated() {
 	sortList("../lists/top_rated.uil", 3);
 }
 
-vector<Story> pullList(std::string path, std::string where, uint32_t offset, uint32_t limit) {
+vector<Story> DBInterface::pullList(std::string path, std::string where, uint32_t offset, uint32_t limit) {
 	//File stuff
 	std::fstream file;
 
@@ -279,7 +312,9 @@ vector<Story> pullList(std::string path, std::string where, uint32_t offset, uin
 		if (i + offset >= rSize) {//break the loop if we've run out of items in the list
 			break;
 		}
+		semaphore.wait();
 		RowResult res = table.select().where("id = " + std::to_string(readList[i + offset])).execute();
+		semaphore.notify();
 		if (res.count()) { //If the catagories match and therefore we got a hit
 			Row row = res.fetchOne();
 			Story story = { row.get(0), (std::string)row.get(1), (std::string)row.get(2), row.get(3), row.get(4), row.get(6), (unsigned int)row.get(7) };//add result to return vector
@@ -299,7 +334,24 @@ Story DBInterface::pullStoryInfo(const uint32_t& id) {
 	Story ret = {};
 	Table table = db->getTable("test1");
 	string qString = "id = " + std::to_string(id);
-	RowResult res = table.select().where(qString).execute();
+	RowResult res;
+	try {
+		semaphore.wait();
+		res = table.select().where(qString).execute();
+		semaphore.notify();
+	}
+	catch (const mysqlx::Error& err) {
+		cout << "ERROR: " << err << endl;
+		throw;
+	}
+	catch (std::exception& ex) {
+		cout << "STD EXCEPTION: " << ex.what() << endl;
+		throw;
+	}
+	catch (const char* ex) {
+		cout << "EXCEPTION: " << ex << endl;
+		throw;
+	}
 	if (!res.count())cout << "WARNING: ID QUERY RETURNED NO RESULTS" << endl;
 	if (res.count() > 1)cout << "WARNING: ID QUERY RETURNED MULTIPLE RESULTS" << endl;
 
@@ -327,8 +379,24 @@ vector<Story> DBInterface::pullUserStories(uint32_t id, uint32_t offset, uint32_
 	ret.reserve(limit); //want to make sure we don't have empty values at the end if there aren't enough results. Thus we use reserve and pushBack
 
 	Table table = db->getTable("test1");
-	
-	RowResult res = table.select().where("author_id = " + std::to_string(id)).execute();
+	RowResult res;
+	try {
+		semaphore.wait();
+		res = table.select().where("author_id = " + std::to_string(id)).execute();
+		semaphore.notify();
+	}
+	catch (const mysqlx::Error& err) {
+		cout << "ERROR: " << err << endl;
+		throw;
+	}
+	catch (std::exception& ex) {
+		cout << "STD EXCEPTION: " << ex.what() << endl;
+		throw;
+	}
+	catch (const char* ex) {
+		cout << "EXCEPTION: " << ex << endl;
+		throw;
+	}
 	if (res.count()) { //If the catagories match and therefore we got a hit
 		
 		Row row = res.fetchOne();

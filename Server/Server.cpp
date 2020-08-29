@@ -15,7 +15,6 @@
 #include <cpprest/json.h>
 
 #include <arjet/DBInterface.h>
-#include <arjet/Sanitizer.h>
 
 using std::cout;
 using std::endl;
@@ -38,8 +37,8 @@ DBInterface *dbp; //pointer to the DBInterface class created in main()
 
 void handleGet(http_request const& req);
 void handleGetQuery(http_request const& req);
-void handleGetQueryResults(http_request const& req, std::map<utility::string_t, utility::string_t> queries);
-void handleGetQueryStory(http_request const& req, const uint32_t& id);
+void handleGetQueryResults(http_request const& req, QueryMap);
+void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap queries);
 void handleGetQueryProfile(http_request const& req, QueryMap queries);
 void handleGetFile(http_request const& req);
 void handleGetRoot(http_request const& req);
@@ -52,7 +51,7 @@ void handleLogin(http_request const& req);
 
 void handlePut(http_request const& req);
 void handleDbPut(http_request const& req, vector<std::wstring> tokens);
-void addStory(http_request const& req);
+void addStoryMeta(http_request const& req);
 void handleSignup(http_request const& req);
 
 void createContentMap() {
@@ -200,6 +199,7 @@ void handleGet(http_request const& req) {
 
 void handleGetQuery(http_request const& req) {//For pulling from the db
     //break path into tokens
+
     //TODO clean this tf up
     //Also move to its own function
     vector<std::wstring> tokens;
@@ -221,12 +221,14 @@ void handleGetQuery(http_request const& req) {//For pulling from the db
         handleGetQueryResults(req, queries);
     }
     else if (tokens[0] == L"story") {
-        handleGetQueryStory(req, stoi(queries[L"id"]));
+        wcout << queries[L"t"] << endl;
+        uint32_t id = stoi(queries[L"id"]);
+        handleGetQueryStory(req, id, queries);
     }
     else req.reply(404U);
 }
 
-void handleGetQueryResults(http_request const& req, std::map<utility::string_t, utility::string_t> queries){
+void handleGetQueryResults(http_request const& req, QueryMap queries){
     vector<Story> stories;
 
     string where = "";
@@ -260,10 +262,35 @@ void handleGetQueryResults(http_request const& req, std::map<utility::string_t, 
     req.reply(status_codes::OK, arr);
 }
 
-void handleGetQueryStory(http_request const& req, const uint32_t& id) {
+void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap queries) {
     //Triggers if a query is called that mentions id. Pulls the specific story and sends the story along with the database entry as a JSON
+    wcout << queries[L"t"] << endl;
+
     Story story = dbp->pullStoryInfo(id);
-    value storyJSON = storyToJSON(story);
+    wcout << queries[L"t"] << endl;
+    if (queries[L"t"] == L"m") {//request for metadata
+        value storyJSON = storyToJSON(story);
+        req.reply(200U, storyJSON);
+        return;
+    }else if(queries[L"t"] == L"t"){//request for html file
+        std::wifstream file;
+        string path = "../" + story.path;
+        concurrency::streams::fstream::open_istream(utility::conversions::utf8_to_utf16(path), std::ios::in)
+        .then([=](concurrency::streams::istream is) {
+        req.reply(200U, is, L"text/html").then([](pplx::task<void> t) { handle_error(t); });
+            })
+        .then([=](pplx::task<void> t) {
+            try
+            {
+                t.get();
+            }
+            catch (...)
+            {
+                req.reply(404U).then([](pplx::task<void> t) { handle_error(t); });
+            }
+        });
+        return;
+    }
 
     std::wifstream file;
     string path = "../" + story.path;
@@ -276,10 +303,6 @@ void handleGetQueryStory(http_request const& req, const uint32_t& id) {
     value text;
     file >> text;
 
-    value obj = value::object();
-    obj[L"properties"] = storyJSON;
-    obj[L"text"] = text;
-    req.reply(200U, obj);
 }
 
 void handleGetQueryProfile(http_request const& req, QueryMap queries) {
@@ -417,7 +440,6 @@ void updateStory(http_request const& req) {
         throw;
     }
 
-
     if (dbp->updateStory(story) == true) {
         req.reply(200);
     }
@@ -483,13 +505,13 @@ void handleDbPut(http_request const& req, vector<std::wstring> tokens) {
     if (tokens[1] == L"add") {
         if (tokens[2] == L"story") {
 
-            addStory(req);
+            addStoryMeta(req);
         }
     }
     else req.reply(404);
 }
 
-void addStory(http_request const& req) {
+void addStoryMeta(http_request const& req) {
     if (!handleAuthentication(req, 1)) {
         cout << "Couldn't add story: failed authentication" << endl;
         return;
@@ -514,6 +536,10 @@ void addStory(http_request const& req) {
         req.reply(500);
         cout << "ERROR: failed to add to database" << endl;
     }
+}
+
+void UpdateStoryFile(http_request const& req, QueryMap queries) {
+    //std::ofstream("../)
 }
 
 void handleSignup(http_request const& req) {
@@ -549,12 +575,7 @@ void handleSignup(http_request const& req) {
 
 
 int main(){
-    Sanitizer sanitizer;
-    sanitizer.SanitizeHTML("\<a onmouseover=alert(document.cookie)\>xxs link\</a\>");
-    cout << sanitizer.GetStr();
-
-    //start sql connection first
-    DBInterface db = DBInterface("54.242.214.211", 33060, "app", "xH8#N7GmtILb", "website");
+    dbp = new DBInterface("54.242.214.211", 33060, "app", "xH8#N7GmtILb", "website");
 
     const std::wstring base_url = U("http://*:8080");
 
