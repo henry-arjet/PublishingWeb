@@ -62,8 +62,8 @@ function DevPage(){
       return (
         <Container className="page">
             <Row className="devButtonRow">
-                <Button variant="dark" onClick={sortTop} className="devButton">Re-Sort Top Rated</Button>
-                <Button variant="dark" onClick={sortViews} className="devButton">Re-Sort Most Viewed</Button>
+                <Button variant="dark" onClick={sortTop} className="paddedButton">Re-Sort Top Rated</Button>
+                <Button variant="dark" onClick={sortViews} className="paddedButton">Re-Sort Most Viewed</Button>
             </Row>
             <Row>
                 <Form onSubmit={handleSubmit}>

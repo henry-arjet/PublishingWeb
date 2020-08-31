@@ -1,35 +1,50 @@
 import React, {useContext, useState, useEffect} from "react";
+import {Link} from "react-router-dom";
 import { AuthContext } from "../Context/Auth";
 import CardGrid from "../Cards/CardGrid";
+import { Container, Button } from "react-bootstrap";
+import { LinkContainer } from "react-router-bootstrap";
 
 //This page is put behind a private route, so it should only be accessed if the user authtokens are filled
 function UserPage() {
   let auth = useContext(AuthContext);
   const [results, setResults] = useState({});
   const [gotResults, setGotResults] = useState(false);
+  const [isLoggedIn, setLoggedIn] = useState(true);
+
 
   useEffect(() => {
     fetch(window.location.protocol + "//" + window.location.host + location.pathname + '/stories?p=1', {
     headers: { Authorization: "Basic " + btoa(auth.authTokens.id + ":" + auth.authTokens.password),},
     }).then(response => response.json()).then(data => setResults(data), setGotResults(true));
-  }, []);
+  }, []); //this pattern of useEffect is basically onModuleDidLoad
 
-  
+  function logout(){
+    localStorage.removeItem("tokens"); auth.authTokens = null;
+    auth.setAuthTokens(null);
+    setLoggedIn(false);
+  }
   
     //  .then(response => response.json()).then(data => setResults(data), setGotResults(true));
-  if(gotResults){
-    return(
+  if(isLoggedIn){
+    if(gotResults){
+      return(
+        <Container className="page">
+          <p>Welcome, {auth.authTokens.username}</p>
+          <LinkContainer to="/new/meta"><Button variant="dark" className="paddedButton"> Upload New Story</Button></LinkContainer>
+          <Link to="/" onClick={logout} >Log Out</Link>
+          <CardGrid results={results} />
+        </Container>
+      );
+    }else return(
       <div>
-        <p>Welcome, {auth.authTokens.username}</p>
-        <CardGrid results={results} />
+        Fetching your profile...
       </div>
     );
-  }//else
-  return(
-    <div>
-      Please log in. In fact, how are you here without being logged in? Mad suss
-    </div>
-  );
+  }
+  else {
+    return <Redirect to="/" />;
+  }
 }
 
 export default UserPage;

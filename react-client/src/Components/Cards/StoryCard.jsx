@@ -11,14 +11,16 @@ class StoryCard extends Component {
         }
     }
     render() {
+        console.log(this.props.rating)
+
         return (
             <Card className="storyCard">
-                <LinkContainer to = {this.props.link}>
+                <LinkContainer to = {"/" + this.props.link}>
                     <Card.Body>
                         <Card.Title>{this.props.title}</Card.Title>
                         <Container >
                             <Row className="StoryCardStats">
-                                <Card.Text as="Col">{this.props.rating + "/5.0"}</Card.Text>
+                                <Card.Text as="Col">{this.props.rating != null ? this.props.rating + "/5.0": "Unrated"}</Card.Text>
                                 <Col />
                                 <Card.Text as="Col">{this.props.views + " views"}</Card.Text>
                             </Row>

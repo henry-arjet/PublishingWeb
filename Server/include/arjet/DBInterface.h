@@ -62,7 +62,7 @@ public:
 	uint32_t addUser(const User& user); // returns ID upon success, 0 upon fail
 
 	bool updateStory(Story story);//returns true on success, false on fail
-	bool addStory(Story story);//returns true on success, false on fail
+	uint32_t addStory(Story story);//returns id on success, 0 on fail
 
 	void sortTopRated(); //updates the topRated list stored in lists/top_rated.uil;
 	vector<Story> pullTopRated(std::string where = "", uint32_t offset = 0, uint32_t limit = uint32_t(20)); //Pulls results from the database using the toprated list
@@ -74,6 +74,7 @@ public:
 	vector<Story> pullUserStories(uint32_t id, uint32_t offset = 0, uint32_t limit = uint32_t(20)); //Pulls results from the database matching user ID
 private:
 	Semaphore semaphore; 
-	vector<Story> pullList(std::string path, std::string where, uint32_t offset, uint32_t limit);
+	vector<Story> pullList(std::string path, std::string where, uint32_t offset, uint32_t limit, uint32_t permission = 1);
 	void sortList(const std::string& path, unsigned int column);//helper function for sorting. Inputs are the path to the uil and the db column used for the key
+	uint32_t getNextIncrement();//Assumes threads have already been locked
 };

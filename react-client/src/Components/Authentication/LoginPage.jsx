@@ -7,7 +7,6 @@ import { Container } from "react-bootstrap";
 function LoginPage() {
   return(
     <div>
-      <p>bro you should, like, log in</p>
       <Container classname="page">
         <LoginForm/>
         <LinkContainer to="/auth/signup"><Nav.Link className="headerNavButton">

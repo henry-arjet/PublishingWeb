@@ -50,8 +50,10 @@ void handleLogin(http_request const& req);
 
 
 void handlePut(http_request const& req);
-void handleDbPut(http_request const& req, vector<std::wstring> tokens);
+void handlePutNew(http_request const& req, vector<std::wstring> tokens);
 void addStoryMeta(http_request const& req);
+void handleDbPut(http_request const& req, vector<std::wstring> tokens);
+void addStoryMetaDev(http_request const& req);
 void handleSignup(http_request const& req);
 
 void createContentMap() {
@@ -168,7 +170,7 @@ uint32_t handleAuthentication(http_request const& req, uint32_t privRequired = 0
         return(0);
     }
     else if(privRequired){
-        if (dbp->pullUser(id).privilege < privRequired) {
+        if (user.privilege < privRequired) {
             req.reply(403U);
             return(0);
         }
@@ -177,8 +179,39 @@ uint32_t handleAuthentication(http_request const& req, uint32_t privRequired = 0
     return id;
 }
 
-wstring getContentType(wstring path){
+uint32_t handleAuthentication(http_request const& req, User & user) {//Overload to fill a user
+    //THIS FUNCTION REPLIES ON FAILURE. DO NOT REPLY TWICE;
+    web::http::http_headers headers = req.headers();
+    if (!headers.has(L"Authorization")) {
+        req.reply(401U);
+        return 0;
+    } //make sure this is something to authenticate
 
+
+    std::wstring authstringRaw = headers[L"Authorization"];
+    std::wstring authString64W = authstringRaw.substr(6);
+
+    auto data = utility::conversions::from_base64(authString64W);
+    string authString = reinterpret_cast<char*>(data.data());
+    authString.resize(data.size());//cause it doesn't know when to end
+
+    size_t delim = authString.find_first_of(':');
+    uint32_t id = stoi(authString.substr(0, delim));
+    string pass = authString.substr(delim + 1);
+
+    user = dbp->pullUser(id); //Should be safe to assign before checking as a failure in authentication leads to a 403 and a return 0
+    CryptoPP::SHA256 sha;
+    sha.Update((const byte*)pass.data(), pass.size());
+    sha.Update(user.salt, 32);
+    byte* hash = static_cast<byte*>(malloc(32));
+    sha.Final(hash);
+    if (!compareHashes(hash, user.hash)) {
+        req.reply(403U);
+        free(hash);
+        return(0);
+    }
+
+    return id;
 }
 
 void handleGet(http_request const& req) {
@@ -213,7 +246,9 @@ void handleGetQuery(http_request const& req) {//For pulling from the db
         token = wcstok_s(nullptr, del, &helperPtr);
     }
     if (tokens.size() == 0) { req.reply(404U); }
+
     auto queries = web::uri::split_query(req.relative_uri().query());
+
     if (tokens[0] == L"users") {
         handleGetQueryProfile(req, queries);
     }
@@ -221,7 +256,6 @@ void handleGetQuery(http_request const& req) {//For pulling from the db
         handleGetQueryResults(req, queries);
     }
     else if (tokens[0] == L"story") {
-        wcout << queries[L"t"] << endl;
         uint32_t id = stoi(queries[L"id"]);
         handleGetQueryStory(req, id, queries);
     }
@@ -264,10 +298,19 @@ void handleGetQueryResults(http_request const& req, QueryMap queries){
 
 void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap queries) {
     //Triggers if a query is called that mentions id. Pulls the specific story and sends the story along with the database entry as a JSON
-    wcout << queries[L"t"] << endl;
 
     Story story = dbp->pullStoryInfo(id);
-    wcout << queries[L"t"] << endl;
+    if (story.permission > 0) {
+        User user;
+        if (!handleAuthentication(req, user)) {
+            return;
+        }
+        if (!(user.privilege > 1 || user.id == story.authorID)) { //well that's a little ugly
+            req.reply(403U);
+            return;
+        }
+    }
+
     if (queries[L"t"] == L"m") {//request for metadata
         value storyJSON = storyToJSON(story);
         req.reply(200U, storyJSON);
@@ -276,32 +319,11 @@ void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap q
         std::wifstream file;
         string path = "../" + story.path;
         concurrency::streams::fstream::open_istream(utility::conversions::utf8_to_utf16(path), std::ios::in)
-        .then([=](concurrency::streams::istream is) {
-        req.reply(200U, is, L"text/html").then([](pplx::task<void> t) { handle_error(t); });
-            })
-        .then([=](pplx::task<void> t) {
-            try
-            {
-                t.get();
-            }
-            catch (...)
-            {
-                req.reply(404U).then([](pplx::task<void> t) { handle_error(t); });
-            }
-        });
+            .then([=](concurrency::streams::istream is) {
+                req.reply(200U, is, L"text/html");
+            });
         return;
     }
-
-    std::wifstream file;
-    string path = "../" + story.path;
-    file.open(path, std::ios::binary);
-    if (!file.is_open()) {
-        cout << "Unable to open file at " << path << endl;
-        req.reply(404u); //404 as this likely means the path is incorrect
-        return;
-    }
-    value text;
-    file >> text;
 
 }
 
@@ -323,9 +345,7 @@ void handleGetQueryProfile(http_request const& req, QueryMap queries) {
     if (queries.find(L"p") != queries.end()) {//which page
         offset = lim * (std::stoi(queries[L"p"]) - 1);
     }
-
     vector<Story> stories = dbp->pullUserStories(id);
-
     value arr = value::array();
     for (int i = 0; i < stories.size(); i++) {
         value temp = storyToJSON(stories[i]);
@@ -496,7 +516,52 @@ void handlePut(http_request const& req) {
     else if (tokens[0] == L"auth") {
         handleSignup(req);
     }
+    else if (tokens[0] == L"new") {
+        handlePutNew(req, tokens);
+    }
     else req.reply(404);
+
+}
+
+void handlePutNew(http_request const& req, vector<std::wstring> tokens) {
+    //Switches can SMD
+    if (tokens[1] == L"meta") {
+        addStoryMeta(req);
+    }
+    else req.reply(404);
+}
+
+void addStoryMeta(http_request const& req) {
+    uint32_t authorID = handleAuthentication(req, 0);
+    if (!authorID) {
+        cout << "Couldn't add story: failed authentication" << endl;
+        return;
+    }
+    Story story;
+    story.id = 0; //Not used. Set to 0 to flag as error.
+    story.authorID = authorID;
+    try {
+        story.title = utility::conversions::utf16_to_utf8(req.extract_json().get()[L"title"].as_string());
+    }
+    catch (web::json::json_exception& ex) {
+        cout << "JSON EXCEPTION: " << ex.what() << endl;
+        req.reply(500);
+        return;
+    }
+    catch (std::exception& ex) {
+        cout << "STD EXCEPTION: " << ex.what() << endl;
+        req.reply(500);
+        return;
+    }
+
+    if (dbp->addStory(story) != 0) {
+        req.reply(201);//HTTP Created
+        //system("..SanitizerBuild/netcoreapp3.1/Sanitizer.pdb");
+    }
+    else {
+        req.reply(500);
+        cout << "ERROR: failed to add to database" << endl;
+    }
 
 }
 
@@ -505,13 +570,14 @@ void handleDbPut(http_request const& req, vector<std::wstring> tokens) {
     if (tokens[1] == L"add") {
         if (tokens[2] == L"story") {
 
-            addStoryMeta(req);
+            addStoryMetaDev(req);
         }
     }
     else req.reply(404);
 }
 
-void addStoryMeta(http_request const& req) {
+
+void addStoryMetaDev(http_request const& req) {
     if (!handleAuthentication(req, 1)) {
         cout << "Couldn't add story: failed authentication" << endl;
         return;
@@ -529,7 +595,7 @@ void addStoryMeta(http_request const& req) {
         cout << "STD EXCEPTION: " << ex.what() << endl;
         throw;
     }
-    if (dbp->addStory(story) == true) {
+    if (dbp->addStory(story) != 0) {
         req.reply(201);//HTTP Created
     }
     else {

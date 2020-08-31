@@ -45,10 +45,6 @@ footer {
   margin-bottom: 1rem;
 }
 
-.devButton{
-  margin: 0.5rem;
-}
-
 .jsonOutput{
   white-space: pre-line;
 }
@@ -56,28 +52,6 @@ footer {
   margin-left: 100px;
   margin-right: 100px;
 }
-/*
-.mce-tinymce, .mce-container-body, #code_ifr {
-  min-height: 100% !important;
+.paddedButton{
+  margin: 0.5rem;
 }
-
-.mce-container-body {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-}
-
-.mce-container-body .mce-edit-area {
-  position: absolute;
-  top: 69px;
-  bottom: 37px;
-  left: 0;
-  right: 0;
-}
-.mce-tinymce .mce-statusbar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-}*/

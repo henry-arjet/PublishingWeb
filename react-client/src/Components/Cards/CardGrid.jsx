@@ -26,7 +26,7 @@ class CardGrid extends Component {
         for (var i = 0; i < props.results.length; i++){
             let li = "story/" + props.results[i].id;
             cardList.push(<StoryCard link={li} title={props.results[i].title}
-                 rating={(props.results[i].rating / 10000).toFixed(1).toString()}
+                 rating={props.results[i].rating > 50000?null:(props.results[i].rating / 10000).toFixed(1).toString()}//50001 is default for unrated values
                  views={this.CleanViews(props.results[i].views)} />);
         }
         return cardList;

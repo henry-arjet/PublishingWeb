@@ -13,6 +13,7 @@ import LoginPage from "./Authentication/LoginPage"
 import SignUpPage from './Authentication/SignUpPage';
 import UserPage from './User/UserPage';
 import WritingPage from './WritingPage';
+import StoryMetaCreator from './StoryComponent/StoryMetaCreator';
 
 function App(props){
     const existingTokens = JSON.parse(localStorage.getItem("tokens"));
@@ -23,7 +24,7 @@ function App(props){
       setAuthTokens(data);
     }
     return (
-      <AuthContext.Provider value={{authTokens, setAuthTokens: setTokens }}>
+      <AuthContext.Provider value={{authTokens, setAuthTokens}}>
         <Router>
           <div>
             <NavBar />
@@ -40,6 +41,7 @@ function App(props){
               <Route name="story" path="/story">
                 <StoryPage />
               </Route>
+              <Route name="new story meta" path="/new/meta" component={StoryMetaCreator}/>
               <PrivateRoute name="devtools" path="/devtools" component={DevPage} />
               <PrivateRoute name="userpage" path="/users/profile" component={UserPage} />
               <Route name="login" path="/auth/login" component={LoginPage}/>
@@ -55,6 +57,3 @@ function App(props){
 
 export default App;
 
-/*              <Route name="devtools" path="/devtools">
-                <DevPage />
-              </Route>*/

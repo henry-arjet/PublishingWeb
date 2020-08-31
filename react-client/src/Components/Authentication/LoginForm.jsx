@@ -1,13 +1,14 @@
 import React, {Component, useState, useContext } from 'react';
 import Button from 'react-bootstrap/Button';
 import { Container, Row, Form, Col } from 'react-bootstrap';
-import { useFormik } from 'formik';
+import { useFormik,Field, } from 'formik';
 import { AuthContext } from "../Context/Auth";
 import { Redirect } from "react-router-dom";
 
 function LoginForm(){
     const [head, setHead] = useState({style:{}, text:"Please Log In"});
     const [isLoggedIn, setLoggedIn] = useState(false);
+    const [remember, setRemember] = useState(false);
     let auth = useContext(AuthContext);
     const formik = useFormik({
         initialValues: {
@@ -28,6 +29,7 @@ function LoginForm(){
         return errors;
     }
     function handleSubmit(values){
+        console.log(remember);
         fetch(window.location.origin + "/auth/login", {
             method: "POST",
             headers: {'Content-Type': 'application/json',},
@@ -35,11 +37,10 @@ function LoginForm(){
         }).then(response => {
             if (response.status === 200) {
               response.json().then(results => {
-                console.log(results);
                 auth.setAuthTokens(results);
-                console.log(auth.authTokens)
+                if(remember) localStorage.setItem("tokens", JSON.stringify(results));
                 setLoggedIn(true);
-              });//Sometimes I hate async
+              });
             } else if (response.status == 401) {
                 formik.values.password = "";
                 setHead({styles: {color:"red"},text: "Invalid username or password"});
@@ -77,9 +78,11 @@ function LoginForm(){
                     Please enter your password
                 </Form.Control.Feedback>
             </Form.Group>
+
+            <Form.Check name = "remember" label="Remember Me" onChange={(event) => {setRemember(event.currentTarget.checked);}} />
+            <br/>
             <Button variant="dark" type="submit">Let's Do It</Button>
         </Form>
     )
   }
-  
   export default LoginForm;

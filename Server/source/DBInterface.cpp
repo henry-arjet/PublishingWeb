@@ -84,9 +84,7 @@ uint32_t DBInterface::addUser(const User& user) {
 	try{
 		semaphore.wait();
 		table.insert().values(Value(), user.username, bytes(user.hash, 32), bytes(user.salt, 32), user.privilege).execute();
-		semaphore.notify();
 		//now to find the last inserted id
-		semaphore.wait();
 		Row row = table.select("LAST_INSERT_ID()").execute().fetchOne();
 		semaphore.notify();
 		cout << "LAST_INSERT_ID: " << row.get(0) << endl;
@@ -139,13 +137,28 @@ bool DBInterface::updateStory(Story story){
 	}
 }
 
-bool DBInterface::addStory(Story story) {
+uint DBInterface::addStory(Story story) {
 	Table table = db->getTable("test1");
 	try {
-		semaphore.wait();
-		table.insert().values(Value(), story.title, story.path, story.rating, story.views, 0, story.authorID, story.permission).execute();
-		semaphore.notify();
-		return true;
+		if (story.path == "") {//This means it's a auto-created story, most likely from a user
+			story.views = 0;
+			story.permission = 2;
+			semaphore.wait();
+			table.insert().values(Value(), story.title, story.path, 50001, story.views, 0, story.authorID, story.permission).execute();
+			story.id = table.select("LAST_INSERT_ID()").execute().fetchOne().get(0);
+			story.path = "stories/" + std::to_string(story.id) + ".html";
+			table.update().set("path", story.path).where("id = " + std::to_string(story.id)).execute();
+			semaphore.notify(); //need to keep the db locked for a while for this to work
+			return story.id;
+			
+		}
+		else {
+			semaphore.wait();
+			table.insert().values(Value(), story.title, story.path, story.rating, story.views, 0, story.authorID, story.permission).execute();
+			RowResult res = table.select("LAST_INSERT_ID()").execute();
+			semaphore.notify();
+			return res.fetchOne().get(0);
+		}
 	}
 
 	catch (const mysqlx::Error& err){
@@ -282,7 +295,7 @@ void DBInterface::sortTopRated() {
 	sortList("../lists/top_rated.uil", 3);
 }
 
-vector<Story> DBInterface::pullList(std::string path, std::string where, uint32_t offset, uint32_t limit) {
+vector<Story> DBInterface::pullList(std::string path, std::string where, uint32_t offset, uint32_t limit, uint32_t permission) {
 	//File stuff
 	std::fstream file;
 
@@ -313,7 +326,7 @@ vector<Story> DBInterface::pullList(std::string path, std::string where, uint32_
 			break;
 		}
 		semaphore.wait();
-		RowResult res = table.select().where("id = " + std::to_string(readList[i + offset])).execute();
+		RowResult res = table.select().where("id = " + std::to_string(readList[i + offset]) + "and permission <= " + std::to_string(permission)).execute();
 		semaphore.notify();
 		if (res.count()) { //If the catagories match and therefore we got a hit
 			Row row = res.fetchOne();
@@ -374,7 +387,6 @@ vector<Story> DBInterface::pullTopRated(std::string where, uint32_t offset, uint
 
 vector<Story> DBInterface::pullUserStories(uint32_t id, uint32_t offset, uint32_t limit){
 	
-
 	vector<Story> ret;
 	ret.reserve(limit); //want to make sure we don't have empty values at the end if there aren't enough results. Thus we use reserve and pushBack
 
@@ -384,6 +396,7 @@ vector<Story> DBInterface::pullUserStories(uint32_t id, uint32_t offset, uint32_
 		semaphore.wait();
 		res = table.select().where("author_id = " + std::to_string(id)).execute();
 		semaphore.notify();
+
 	}
 	catch (const mysqlx::Error& err) {
 		cout << "ERROR: " << err << endl;
@@ -397,18 +410,51 @@ vector<Story> DBInterface::pullUserStories(uint32_t id, uint32_t offset, uint32_
 		cout << "EXCEPTION: " << ex << endl;
 		throw;
 	}
+	cout << ret.size() << endl;
+
 	if (res.count()) { //If the catagories match and therefore we got a hit
-		
-		Row row = res.fetchOne();
-		while (row) {
-			Story story = { row.get(0), (std::string)row.get(1), (std::string)row.get(2), row.get(3), row.get(4), row.get(6), (unsigned int)row.get(7) };//add result to return vector
-			ret.push_back(story);
-			row = res.fetchOne();
+		try {
+
+			Row row = res.fetchOne();
+
+			while (row) {
+				Story story = { row.get(0), (std::string)row.get(1), (std::string)row.get(2), row.get(3), row.get(4), row.get(6), (unsigned int)row.get(7) };//add result to return vector
+				ret.push_back(story);
+				row = res.fetchOne();
+			}
+		}
+		catch (std::exception& ex) {
+			cout << "STD EXCEPTION: " << ex.what() << endl;
+			throw;
+		}
+		catch (const char* ex) {
+			cout << "EXCEPTION: " << ex << endl;
+			throw;
 		}
 	}
-
-
 	return ret;
+}
+
+uint32_t DBInterface::getNextIncrement() {
+	RowResult res;
+	try {
+		//Remember: semaphores are handled by whichever method calls this method.
+		Table table = sesh->getSchema("INFORMATION_SCHEMA").getTable("TABLES");
+		res = table.select("AUTO_INCREMENT").where("TABLE_NAME = 'test1'").execute();
+		return res.fetchOne().get(0);
+	}
+	catch (const mysqlx::Error& err) {
+		cout << "ERROR: " << err << endl;
+		return 0;
+	}
+	catch (std::exception& ex) {
+		cout << "STD EXCEPTION: " << ex.what() << endl;
+		return 0;
+	}
+	catch (const char* ex) {
+		cout << "EXCEPTION: " << ex << endl;
+		return 0;
+	}
 }
 
 DBInterface::~DBInterface() {
