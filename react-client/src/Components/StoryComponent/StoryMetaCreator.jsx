@@ -3,9 +3,13 @@ import { AuthContext } from "../Context/Auth";
 import { useFormik } from 'formik';
 import { Form, Button, Container } from 'react-bootstrap';
 
+//This component creates the metadata for a story and puts it in the database. 
+//This must happen before the actual html content is submitted.
+//After this function succeeds, a new story will be in the database, but it will have no html content associated with it
 
 function StoryMetaCreator(){
     const [head, setHead] = useState({style:{}, text: "Let's fill in some basics for your new story"});
+    const [shouldRedirect, setShouldRedirect] = useState(false);
     let auth = useContext(AuthContext);
     const formik = useFormik({
         initialValues: {
@@ -19,18 +23,18 @@ function StoryMetaCreator(){
         if(!values.title){
             errors.title = "Required";
         } else if (values.title.length > 40) {
-            errors.title = 'Must be 40 characters or less';
+            errors.title = 'Must be 40 characters or less'; //Actual db limit is 255, but I don't want to have to deal with super long titles
         }
         return errors;
     }
     function handleSubmit(values){
-        fetch(window.location.pathname, {
+        fetch(window.location.pathname, { //Try and add to the database
             method: "PUT",
             headers: {'Content-Type': 'application/json', 'Authorization': "Basic " + btoa(auth.authTokens.id + ":" + auth.authTokens.password),},
             body: JSON.stringify({title: values.title,})
         }).then(result => {
-            if (result.status === 201) {
-              console.log("success!")
+            if (result.status === 201) { //success. Added
+              setShouldRedirect(true);
             } else if (result.status == 401) {
                 setHead({style: {color:"red"},text: "Please log in"});
             } else if (result.status==403){
@@ -38,9 +42,12 @@ function StoryMetaCreator(){
             }
             else{
                 setHead({styles: {color:"red"},text: "Something went wrong, but I don't know what"});
-                console.log("something went wrong :{");
+                console.log("something went wrong :{");//Note: ':{' is not part of the code, it's a face.
             }
         });
+    }
+    if(shouldRedirect){
+        
     }
     return (
         <Container className="page">

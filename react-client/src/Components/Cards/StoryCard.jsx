@@ -11,8 +11,6 @@ class StoryCard extends Component {
         }
     }
     render() {
-        console.log(this.props.rating)
-
         return (
             <Card className="storyCard">
                 <LinkContainer to = {"/" + this.props.link}>

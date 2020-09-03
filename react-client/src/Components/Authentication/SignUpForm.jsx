@@ -42,7 +42,7 @@ function SignUpForm(){
             body: JSON.stringify({username: values.username, password: values.password})
         }).then(result => {
             if (result.status === 201) {
-              auth.setAuthTokens(response.json());
+              auth.setAuthTokens(result.json());
               setLoggedIn(true);
             } else if (result.status == 409) {
                 setHead({style: {color:"red"},text: "Username already taken"});

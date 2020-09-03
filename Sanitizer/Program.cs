@@ -11,7 +11,7 @@ namespace Sanitizer
     {
         static void Main(string[] args)
         {
-            DirectoryInfo dirty = new DirectoryInfo(@"../../Dirty_Stories/");
+            DirectoryInfo dirty = new DirectoryInfo(@"../Stories-Dirty/");
             foreach (FileInfo file in dirty.GetFiles())
             {
                 Console.WriteLine("Cleaning " + file.Name);
@@ -21,12 +21,12 @@ namespace Sanitizer
         }
         static void Clean(string name)
         {
-            string html = File.ReadAllText("../../Dirty_Stories/" + name);
+            string html = File.ReadAllText("../Stories-Dirty/" + name);
 
             HtmlSanitizer sanitizer = new HtmlSanitizer();
             string cleanHtml = sanitizer.Sanitize(html);
 
-            File.WriteAllText("../../Stories/" + name, cleanHtml);
+            File.WriteAllText("../Stories/" + name, cleanHtml);
         }
     }
 }

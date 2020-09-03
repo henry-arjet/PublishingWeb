@@ -12,7 +12,7 @@ import PrivateRoute from "./PrivateRoute"
 import LoginPage from "./Authentication/LoginPage"
 import SignUpPage from './Authentication/SignUpPage';
 import UserPage from './User/UserPage';
-import WritingPage from './WritingPage';
+import WritingPage from './StoryComponent/WritingPage';
 import StoryMetaCreator from './StoryComponent/StoryMetaCreator';
 
 function App(props){
@@ -38,7 +38,7 @@ function App(props){
               <Route name="mostviewed" path="/mostviewed">
                 <MostViewedPage />
               </Route>
-              <Route name="story" path="/story">
+              <Route name="story" exact path="/story/*">
                 <StoryPage />
               </Route>
               <Route name="new story meta" path="/new/meta" component={StoryMetaCreator}/>
@@ -46,7 +46,7 @@ function App(props){
               <PrivateRoute name="userpage" path="/users/profile" component={UserPage} />
               <Route name="login" path="/auth/login" component={LoginPage}/>
               <Route name="signup" path="/auth/signup" component={SignUpPage}/>
-              <Route name="writer" path="/users/writer" component={WritingPage}/>
+              <Route name="writer" path="/writer" component={WritingPage}/>
             </switch>
             <Footer />
           </div>

@@ -17,7 +17,7 @@ function UserPage() {
     fetch(window.location.protocol + "//" + window.location.host + location.pathname + '/stories?p=1', {
     headers: { Authorization: "Basic " + btoa(auth.authTokens.id + ":" + auth.authTokens.password),},
     }).then(response => response.json()).then(data => setResults(data), setGotResults(true));
-  }, []); //this pattern of useEffect is basically onModuleDidLoad
+  }, []); //this pattern of useEffect is basically componentDidMount
 
   function logout(){
     localStorage.removeItem("tokens"); auth.authTokens = null;

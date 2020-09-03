@@ -1,0 +1,14 @@
+C:\Users\Henry\Documents\PublishingWeb\SanitizerBuild\netcoreapp3.1\Sanitizer.exe
+C:\Users\Henry\Documents\PublishingWeb\SanitizerBuild\netcoreapp3.1\Sanitizer.deps.json
+C:\Users\Henry\Documents\PublishingWeb\SanitizerBuild\netcoreapp3.1\Sanitizer.runtimeconfig.json
+C:\Users\Henry\Documents\PublishingWeb\SanitizerBuild\netcoreapp3.1\Sanitizer.runtimeconfig.dev.json
+C:\Users\Henry\Documents\PublishingWeb\SanitizerBuild\netcoreapp3.1\Sanitizer.dll
+C:\Users\Henry\Documents\PublishingWeb\SanitizerBuild\netcoreapp3.1\Sanitizer.pdb
+C:\Users\Henry\Documents\PublishingWeb\Sanitizer\obj\Release\netcoreapp3.1\Sanitizer.csprojAssemblyReference.cache
+C:\Users\Henry\Documents\PublishingWeb\Sanitizer\obj\Release\netcoreapp3.1\Sanitizer.AssemblyInfoInputs.cache
+C:\Users\Henry\Documents\PublishingWeb\Sanitizer\obj\Release\netcoreapp3.1\Sanitizer.AssemblyInfo.cs
+C:\Users\Henry\Documents\PublishingWeb\Sanitizer\obj\Release\netcoreapp3.1\Sanitizer.csproj.CoreCompileInputs.cache
+C:\Users\Henry\Documents\PublishingWeb\Sanitizer\obj\Release\netcoreapp3.1\Sanitizer.csproj.CopyComplete
+C:\Users\Henry\Documents\PublishingWeb\Sanitizer\obj\Release\netcoreapp3.1\Sanitizer.dll
+C:\Users\Henry\Documents\PublishingWeb\Sanitizer\obj\Release\netcoreapp3.1\Sanitizer.pdb
+C:\Users\Henry\Documents\PublishingWeb\Sanitizer\obj\Release\netcoreapp3.1\Sanitizer.genruntimeconfig.cache

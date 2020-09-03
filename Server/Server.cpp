@@ -52,6 +52,7 @@ void handleLogin(http_request const& req);
 void handlePut(http_request const& req);
 void handlePutNew(http_request const& req, vector<std::wstring> tokens);
 void addStoryMeta(http_request const& req);
+void handlePutWriter(http_request const& req, uint32_t id);
 void handleDbPut(http_request const& req, vector<std::wstring> tokens);
 void addStoryMetaDev(http_request const& req);
 void handleSignup(http_request const& req);
@@ -159,10 +160,14 @@ uint32_t handleAuthentication(http_request const& req, uint32_t privRequired = 0
     string pass = authString.substr(delim + 1);
 
     User user = dbp->pullUser(id);
+    if (user.id == 0){ //if the previous function failed
+        req.reply(401U);
+        return 0;
+    }
     CryptoPP::SHA256 sha;
     sha.Update((const byte*)pass.data(), pass.size());
     sha.Update(user.salt, 32);
-    byte* hash = static_cast<byte*>(malloc(32));
+    byte* hash = (byte*)(malloc(32));
     sha.Final(hash);
     if (!compareHashes(hash, user.hash)) {
         req.reply(403U);
@@ -203,7 +208,7 @@ uint32_t handleAuthentication(http_request const& req, User & user) {//Overload 
     CryptoPP::SHA256 sha;
     sha.Update((const byte*)pass.data(), pass.size());
     sha.Update(user.salt, 32);
-    byte* hash = static_cast<byte*>(malloc(32));
+    byte* hash = (byte*)(malloc(32));
     sha.Final(hash);
     if (!compareHashes(hash, user.hash)) {
         req.reply(403U);
@@ -240,12 +245,14 @@ void handleGetQuery(http_request const& req) {//For pulling from the db
     wchar_t* del = (wchar_t*)L"/";
     wchar_t* helperPtr;
     wchar_t* token = wcstok_s(pathC, del, &helperPtr);
+    wcout << pathC << endl;
+
     while (token != NULL)
     {
         tokens.push_back(token);
         token = wcstok_s(nullptr, del, &helperPtr);
     }
-    if (tokens.size() == 0) { req.reply(404U); }
+    if (tokens.size() == 0) { req.reply(404U); return; }
 
     auto queries = web::uri::split_query(req.relative_uri().query());
 
@@ -416,6 +423,7 @@ void handlePost(http_request const& req) {
         handleLogin(req);
     }
     else req.reply(404);
+    cout << "personed" << endl;
 }
 
 void handleDbPost(http_request const& req, vector<std::wstring> tokens) {
@@ -480,13 +488,36 @@ void handleLogin(http_request const& req) {
     CryptoPP::SHA256 sha;
     sha.Update((const byte*)userClear.password.data(), userClear.password.size());
     sha.Update(user.salt, 32);
-    byte* hash = static_cast<byte*>(malloc(32));
+    size_t digestSize = 32;
+    byte* hash = sha.CreateUpdateSpace(digestSize);
     sha.Final(hash);
+    cout << "batter" << endl;
     if (compareHashes(hash, user.hash)) {
         req.reply(200U, UserClearToJSON(userClear));
+        cout << "my" << endl;
     }
-    else req.reply(401U);
-    free(hash);//I may be a student, but at least I free my memory
+    else { 
+        req.reply(401U); 
+        cout << "your" << endl;
+    }
+    //free(hash);//I may be a student, but at least I free my memory
+    cout << "heart," << endl;
+    try {
+        sha.Restart();
+        delete(&sha);
+    }
+    catch (std::exception& ex) {
+        cout << "STD EXCEPTION: " << ex.what() << endl;
+        throw;
+    }
+    catch (const char* ex) {
+        cout << "EXCEPTION: " << ex << endl;
+        throw;
+    }
+    catch (...) {
+        cout << "Something failed" << endl;
+    }
+    cout << "three" << endl;
     return;
 }
 
@@ -518,6 +549,9 @@ void handlePut(http_request const& req) {
     }
     else if (tokens[0] == L"new") {
         handlePutNew(req, tokens);
+    }
+    else if (tokens[0] == L"writer") {
+        handlePutWriter(req, std::stoi(tokens[1]));
     }
     else req.reply(404);
 
@@ -563,6 +597,17 @@ void addStoryMeta(http_request const& req) {
         cout << "ERROR: failed to add to database" << endl;
     }
 
+}
+
+void handlePutWriter(http_request const& req, uint32_t id) {
+    cout << "test" << endl;
+    std::ofstream file;
+    file.open("../Stories-Dirty/" + std::to_string(id) + ".html", std::ios::trunc); //saved in dirty as it is unsanitized user input
+    std::vector<unsigned char> content = req.extract_vector().get();
+    file.write(reinterpret_cast<char*>(content.data()), content.size());
+    file.close();
+    std::system("START \"Sanitizer\" ../SanitizerBuild/netcoreapp3.1/Sanitizer.exe /B"); 
+        //launches the C#-based sanitizer to prevent xss. Outputs the cleaned stories into ../Stories
 }
 
 void handleDbPut(http_request const& req, vector<std::wstring> tokens) {

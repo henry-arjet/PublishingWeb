@@ -55,6 +55,12 @@ User DBInterface::pullUser(const uint32_t& id) {
 	semaphore.wait();
 	RowResult res = table.select().where("id = '" + std::to_string(id) + "'").execute();
 	semaphore.notify();
+	if (res.count() == 0){//if we failed to find the user
+		cout << "ID " << id << " is invalid" << endl;
+		User ret = User();
+		ret.id = 0; //to signal that this is an invalid user
+		return ret;
+	}
 
 	Row row = res.fetchOne();
 	User ret = User();
