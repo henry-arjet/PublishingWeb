@@ -31,9 +31,18 @@ struct User {
 	User() {
 		id = 0;
 		username = "";
-		hash = static_cast<unsigned char*>(malloc(32));
-		salt = static_cast<unsigned char*>(malloc(32));
+		hash = (unsigned char*)(malloc(32));
+		salt = (unsigned char*)(malloc(32));
 		uint32_t privilege = 0;
+	}
+	User(const User& u2) {//I don't want to deep copy, but I don't want to rewrite everything so I don't have to
+		id = u2.id;
+		username = u2.username;
+		privilege = u2.privilege;
+		hash = (unsigned char*)malloc(32);
+		memcpy(hash, u2.hash, 32);
+		salt = (unsigned char*)malloc(32);
+		memcpy(salt, u2.salt, 32);
 	}
 	~User() {
 		free(hash);

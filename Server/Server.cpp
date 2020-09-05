@@ -478,46 +478,29 @@ void updateStory(http_request const& req) {
 }
 
 void handleLogin(http_request const& req) {
-    //get who we're attempting to log in
+    //get who we're attempting to log in    
     UserClear userClear = JSONToUserClear(req.extract_json().get());
     userClear.id = dbp->findUser(userClear.username);
+    
     if (userClear.id == 0) { req.reply(401U); } //can't find user
     User user = dbp->pullUser(userClear.id);
+    
     userClear.privilege = user.privilege; //for replying with a privilege level
 
     CryptoPP::SHA256 sha;
+
     sha.Update((const byte*)userClear.password.data(), userClear.password.size());
     sha.Update(user.salt, 32);
     size_t digestSize = 32;
-    byte* hash = sha.CreateUpdateSpace(digestSize);
+    byte* hash = (CryptoPP::byte*)malloc(digestSize);
     sha.Final(hash);
-    cout << "batter" << endl;
     if (compareHashes(hash, user.hash)) {
         req.reply(200U, UserClearToJSON(userClear));
-        cout << "my" << endl;
     }
-    else { 
-        req.reply(401U); 
-        cout << "your" << endl;
+    else {
+        req.reply(401U);
     }
-    //free(hash);//I may be a student, but at least I free my memory
-    cout << "heart," << endl;
-    try {
-        sha.Restart();
-        delete(&sha);
-    }
-    catch (std::exception& ex) {
-        cout << "STD EXCEPTION: " << ex.what() << endl;
-        throw;
-    }
-    catch (const char* ex) {
-        cout << "EXCEPTION: " << ex << endl;
-        throw;
-    }
-    catch (...) {
-        cout << "Something failed" << endl;
-    }
-    cout << "three" << endl;
+    free(hash);//I may be a student, but at least I free my memory
     return;
 }
 
