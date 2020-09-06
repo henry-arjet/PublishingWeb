@@ -46,7 +46,7 @@ function App(props){
               <PrivateRoute name="userpage" path="/users/profile" component={UserPage} />
               <Route name="login" path="/auth/login" component={LoginPage}/>
               <Route name="signup" path="/auth/signup" component={SignUpPage}/>
-              <Route name="writer" path="/writer" component={WritingPage}/>
+              <PrivateRoute name="writer" path="/writer" component={WritingPage}/>
             </switch>
             <Footer />
           </div>

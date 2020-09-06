@@ -29,7 +29,6 @@ function LoginForm(){
         return errors;
     }
     function handleSubmit(values){
-        console.log(remember);
         fetch(window.location.origin + "/auth/login", {
             method: "POST",
             headers: {'Content-Type': 'application/json',},

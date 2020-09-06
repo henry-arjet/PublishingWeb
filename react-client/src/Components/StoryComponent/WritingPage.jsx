@@ -22,8 +22,6 @@ function WritingPage() {
     let id = window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1);
     let path1 = window.location.pathname.substring(0,window.location.pathname.lastIndexOf("/")) //There is most likely a better way to do this
     let path = window.location.origin + "/" + path1.substring(0,path1.lastIndexOf("/")) + "story";
-    console.log(path);
-    //fetch(path,{
     fetch(path + "/" + id + "?t=t&id=" + id,{
       headers: {Authorization: "Basic " + btoa(auth.authTokens.id + ":" + auth.authTokens.password),},})
     .then(response => response.text())

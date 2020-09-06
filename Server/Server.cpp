@@ -203,8 +203,7 @@ uint32_t handleAuthentication(http_request const& req, User & user) {//Overload 
     size_t delim = authString.find_first_of(':');
     uint32_t id = stoi(authString.substr(0, delim));
     string pass = authString.substr(delim + 1);
-
-    user = dbp->pullUser(id); //Should be safe to assign before checking as a failure in authentication leads to a 403 and a return 0
+    user = dbp->pullUser(id);//Should be safe to assign before checking as a failure in authentication leads to a 403 and a return 0
     CryptoPP::SHA256 sha;
     sha.Update((const byte*)pass.data(), pass.size());
     sha.Update(user.salt, 32);
@@ -245,7 +244,6 @@ void handleGetQuery(http_request const& req) {//For pulling from the db
     wchar_t* del = (wchar_t*)L"/";
     wchar_t* helperPtr;
     wchar_t* token = wcstok_s(pathC, del, &helperPtr);
-    wcout << pathC << endl;
 
     while (token != NULL)
     {
@@ -325,11 +323,17 @@ void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap q
     }else if(queries[L"t"] == L"t"){//request for html file
         std::wifstream file;
         string path = "../" + story.path;
-        concurrency::streams::fstream::open_istream(utility::conversions::utf8_to_utf16(path), std::ios::in)
-            .then([=](concurrency::streams::istream is) {
+        try {
+            concurrency::streams::fstream::open_istream(utility::conversions::utf8_to_utf16(path), std::ios::in)
+                .then([=](concurrency::streams::istream is) {
                 req.reply(200U, is, L"text/html");
-            });
-        return;
+                    }).wait(); //need to wait for the try block to work
+            return;
+        }
+        catch(...) { //Catches if file not found. So reply with 404
+            req.reply(404u);
+            return;
+        }
     }
 
 }
@@ -555,7 +559,7 @@ void addStoryMeta(http_request const& req) {
         return;
     }
     Story story;
-    story.id = 0; //Not used. Set to 0 to flag as error.
+    story.id = 0; //Not used in this function. Set to 0 to flag as error.
     story.authorID = authorID;
     try {
         story.title = utility::conversions::utf16_to_utf8(req.extract_json().get()[L"title"].as_string());
@@ -570,10 +574,10 @@ void addStoryMeta(http_request const& req) {
         req.reply(500);
         return;
     }
+    uint32_t id = dbp->addStory(story);
+    if (id != 0) {
+        req.reply(201U, id);//HTTP Created
 
-    if (dbp->addStory(story) != 0) {
-        req.reply(201);//HTTP Created
-        //system("..SanitizerBuild/netcoreapp3.1/Sanitizer.pdb");
     }
     else {
         req.reply(500);

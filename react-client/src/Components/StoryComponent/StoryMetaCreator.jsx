@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { AuthContext } from "../Context/Auth";
 import { useFormik } from 'formik';
 import { Form, Button, Container } from 'react-bootstrap';
+import { Redirect } from 'react-router';
 
 //This component creates the metadata for a story and puts it in the database. 
 //This must happen before the actual html content is submitted.
@@ -9,7 +10,7 @@ import { Form, Button, Container } from 'react-bootstrap';
 
 function StoryMetaCreator(){
     const [head, setHead] = useState({style:{}, text: "Let's fill in some basics for your new story"});
-    const [shouldRedirect, setShouldRedirect] = useState(false);
+    const [shouldRedirect, setShouldRedirect] = useState(0);
     let auth = useContext(AuthContext);
     const formik = useFormik({
         initialValues: {
@@ -34,7 +35,7 @@ function StoryMetaCreator(){
             body: JSON.stringify({title: values.title,})
         }).then(result => {
             if (result.status === 201) { //success. Added
-              setShouldRedirect(true);
+              result.text().then(id => setShouldRedirect(id));
             } else if (result.status == 401) {
                 setHead({style: {color:"red"},text: "Please log in"});
             } else if (result.status==403){
@@ -46,11 +47,18 @@ function StoryMetaCreator(){
             }
         });
     }
-    if(shouldRedirect){
-        
+
+    function testRedirect(){
+        if (shouldRedirect != 0){
+            return(
+                <Redirect to= {"/writer/" + shouldRedirect}/>
+            );
+        }
     }
+    
     return (
         <Container className="page">
+            {testRedirect()}
             <Form noValidate onSubmit={formik.handleSubmit} classname="signupForm">
                 <h2 style={head.style}>{head.text}</h2>
                 <Form.Group controlId="title">

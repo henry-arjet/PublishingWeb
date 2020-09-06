@@ -22,33 +22,20 @@ struct Story {
 	uint32_t authorID;
 	unsigned char permission;
 };
+
 struct User {
 	uint32_t id;
 	std::string username;
-	unsigned char* hash;
+	unsigned char hash[32];
 	uint32_t privilege;
-	unsigned char* salt;
+	unsigned char salt[32];
 	User() {
 		id = 0;
 		username = "";
-		hash = (unsigned char*)(malloc(32));
-		salt = (unsigned char*)(malloc(32));
 		uint32_t privilege = 0;
 	}
-	User(const User& u2) {//I don't want to deep copy, but I don't want to rewrite everything so I don't have to
-		id = u2.id;
-		username = u2.username;
-		privilege = u2.privilege;
-		hash = (unsigned char*)malloc(32);
-		memcpy(hash, u2.hash, 32);
-		salt = (unsigned char*)malloc(32);
-		memcpy(salt, u2.salt, 32);
-	}
-	~User() {
-		free(hash);
-		free(salt);
-	}
 };
+
 struct UserClear{//Used for holding the user in cleartext
 	//SHOULD NEVER BE WRITTEN TO STORAGE
 	uint32_t id;

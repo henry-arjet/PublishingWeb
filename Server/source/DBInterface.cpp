@@ -57,13 +57,13 @@ User DBInterface::pullUser(const uint32_t& id) {
 	semaphore.notify();
 	if (res.count() == 0){//if we failed to find the user
 		cout << "ID " << id << " is invalid" << endl;
-		User ret = User();
+		User ret;
 		ret.id = 0; //to signal that this is an invalid user
 		return ret;
 	}
 
 	Row row = res.fetchOne();
-	User ret = User();
+	User ret;
 	ret.id = id;
 	ret.username = (std::string)row.get(1);
 	memcpy(ret.hash, row.get(2).getRawBytes().begin(), 32);
@@ -416,7 +416,6 @@ vector<Story> DBInterface::pullUserStories(uint32_t id, uint32_t offset, uint32_
 		cout << "EXCEPTION: " << ex << endl;
 		throw;
 	}
-	cout << ret.size() << endl;
 
 	if (res.count()) { //If the catagories match and therefore we got a hit
 		try {
