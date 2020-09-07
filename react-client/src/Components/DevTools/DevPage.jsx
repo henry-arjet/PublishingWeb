@@ -42,7 +42,7 @@ function DevPage(){
             fetch(window.location.origin + "/db/add/story", {
                 method: "PUT",
                 headers: {'Content-Type': 'application/json',
-                    Authorization: "Basic " + btoa(auth.authTokens.id + ":" + auth.authTokens.password),},
+                    Authorization: auth.authTokens.head},
                 body: JSON.stringify(ret),
             }).catch((error) => {
                 console.error('Error:', error);
@@ -51,12 +51,12 @@ function DevPage(){
     }
     function sortTop(){
         fetch(window.location.origin + "/db/resort/toprated", {method: 'POST',
-        headers: { Authorization: "Basic " + btoa(auth.authTokens.id + ":" + auth.authTokens.password),},
+        headers: { Authorization: auth.authTokens.head},
         })
     }
     function sortViews(){
         fetch(window.location.origin + "/db/resort/mostviewed", {method: 'POST',
-        headers: { Authorization: "Basic " + btoa(auth.authTokens.id + ":" + auth.authTokens.password),},
+        headers: { Authorization: auth.authTokens.head},
         })
     }
       return (

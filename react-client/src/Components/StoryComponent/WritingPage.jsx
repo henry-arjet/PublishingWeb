@@ -1,6 +1,6 @@
-import React, {useContext} from "react";
+import React, {useContext, useState, useEffect} from "react";
 import { AuthContext } from "../Context/Auth";
-import { Container} from "react-bootstrap";
+import { Container, Button} from "react-bootstrap";
 
 import { Editor } from '@tinymce/tinymce-react';
 import tinymce from 'tinymce/tinymce';
@@ -17,29 +17,56 @@ import 'tinymce/plugins/save';
 //This page is put behind a private route, so it should only be accessed if the user authtokens are filled
 function WritingPage() {
   let auth = useContext(AuthContext);
+  let [meta, setMeta] = useState(null);
+  let [isPublic, setIsPublic] = useState(false);
 
   function load(){
+    console.log("loading");
     let id = window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1);
     let path1 = window.location.pathname.substring(0,window.location.pathname.lastIndexOf("/")) //There is most likely a better way to do this
     let path = window.location.origin + "/" + path1.substring(0,path1.lastIndexOf("/")) + "story";
     fetch(path + "/" + id + "?t=t&id=" + id,{
-      headers: {Authorization: "Basic " + btoa(auth.authTokens.id + ":" + auth.authTokens.password),},})
+      headers: {Authorization: auth.authTokens.head},})
     .then(response => response.text())
     .then(data => {if(data)tinyMCE.activeEditor.setContent(data)});
   }
 
+  useEffect(() => {
+    let id = window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1);
+    let path1 = window.location.pathname.substring(0,window.location.pathname.lastIndexOf("/")) //There is most likely a better way to do this
+    let path = window.location.origin + "/" + path1.substring(0,path1.lastIndexOf("/")) + "story";
+    fetch(path + "/" + id + "?t=m&id=" + id,{
+      headers: {Authorization: auth.authTokens.head},})
+    .then(response => response.json())
+    .then(data => {
+      setMeta(data);
+      data.permission == 1?setIsPublic(true):setIsPublic(false);
+    });
+  }, []); //this pattern of useEffect is basically componentDidMount
+  
   const handleSubmit = () => { //When the save button is pressed
     if(!tinyMCE.activeEditor.isDirty()){//Only send data if we need to
       fetch(window.location.pathname, {method: 'PUT',
-      headers: { Authorization: "Basic " + btoa(auth.authTokens.id + ":" + auth.authTokens.password),
+      headers: { Authorization: auth.authTokens.head,
       'Content-Type': 'text/html',},
       body: tinyMCE.activeEditor.getContent(),
     })//Really need to add feedback to show that they saved
     }
   };
+
+  const publish = () => {
+    fetch(window.location.pathname + "/publish", {method: 'POST',
+      headers: { Authorization: auth.authTokens.head}
+    });
+  }
+  const makePrivate = () => {
+    fetch(window.location.pathname + "/makeprivate", {method: 'POST',
+      headers: { Authorization: auth.authTokens.head}
+    });
+  }
   
   return(
-    <div>
+    <Container className="page">
       <Container className="storyEditor" >
           <Editor 
             initialValue="<p>This is the initial content of the editor</p>"
@@ -59,8 +86,12 @@ function WritingPage() {
               setup: load(),
               }}
           />  
-      </Container>
-    </div>
+      </Container> {/*storyEditor*/}
+      {isPublic?
+        <Button variant="dark" onClick={makePrivate} className="paddedButton">Make Private</Button>
+        :<Button variant="dark" onClick={publish} className="paddedButton">Publish</Button>
+      }
+    </Container>
   );
 }
 

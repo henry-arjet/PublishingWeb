@@ -42,8 +42,11 @@ function SignUpForm(){
             body: JSON.stringify({username: values.username, password: values.password})
         }).then(result => {
             if (result.status === 201) {
-              auth.setAuthTokens(result.json());
-              setLoggedIn(true);
+                result.json().then(data => {
+                    data.head = "Basic " + btoa(data.id + ":" + data.password);
+                    auth.setAuthTokens(data)
+                  setLoggedIn(true);
+                });
             } else if (result.status == 409) {
                 setHead({style: {color:"red"},text: "Username already taken"});
             } else{

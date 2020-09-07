@@ -8,4 +8,4 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-export const AuthContext = createContext({userName: "", password: ""});
+export const AuthContext = createContext({authTokens: { id: 0, username: "", password: "", privilege: 0, head: ""}});

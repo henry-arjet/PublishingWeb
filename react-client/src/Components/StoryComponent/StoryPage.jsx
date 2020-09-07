@@ -15,14 +15,14 @@ function StoryPage() {
   useEffect(() => {
     let completed = 0; //counts if both 
     fetch(window.location.pathname + "?t=t&id=" + window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1),
-      {headers: {Authorization: "Basic " + btoa(auth.authTokens.id + ":" + auth.authTokens.password),},})
+      {headers: {Authorization: auth.authTokens.head,},})
       .then(response => response.text())
       .then(data => {setHtml(data);  
         completed+=1; //Race condition. Should be fine, especially since js is single threaded 
         if(completed==2){setGotResults(true)}//Id love to do this another way, but I tried and it doesn't work.
       });
     fetch(window.location.pathname + "?t=m&id=" + window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1),
-      {headers: {Authorization: "Basic " + btoa(auth.authTokens.id + ":" + auth.authTokens.password),},})
+      {headers: {Authorization: auth.authTokens.head,},})
       .then(response => response.json())
       .then(data => {setMeta(data);  
         completed+=1; 

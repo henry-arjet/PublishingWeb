@@ -15,7 +15,7 @@ function UserPage() {
 
   useEffect(() => {
     fetch(window.location.protocol + "//" + window.location.host + location.pathname + '/stories?p=1', {
-    headers: { Authorization: "Basic " + btoa(auth.authTokens.id + ":" + auth.authTokens.password),},
+    headers: { Authorization: auth.authTokens.head,},
     }).then(response => response.json()).then(data => setResults(data), setGotResults(true));
   }, []); //this pattern of useEffect is basically componentDidMount
 

@@ -35,11 +35,12 @@ function LoginForm(){
             body: JSON.stringify({username: values.username, password: values.password})
         }).then(response => {
             if (response.status === 200) {
-              response.json().then(results => {
-                auth.setAuthTokens(results);
-                if(remember) localStorage.setItem("tokens", JSON.stringify(results));
-                setLoggedIn(true);
-              });
+                response.json().then(data => {
+                    data.head = "Basic " + btoa(data.id + ":" + data.password);
+                    auth.setAuthTokens(data)
+                    if(remember) localStorage.setItem("tokens", JSON.stringify(data));
+                    setLoggedIn(true);
+                });
             } else if (response.status == 401) {
                 formik.values.password = "";
                 setHead({styles: {color:"red"},text: "Invalid username or password"});

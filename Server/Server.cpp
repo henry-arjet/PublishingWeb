@@ -47,6 +47,7 @@ void handlePost(http_request const& req);
 void handleDbPost(http_request const& req, vector<std::wstring> tokens);
 void updateStory(http_request const& req);
 void handleLogin(http_request const& req);
+void publish(http_request const& req, uint32_t id, uint32_t newPermission);
 
 
 void handlePut(http_request const& req);
@@ -402,6 +403,7 @@ void handleGetRoot(http_request const& req) {
         req.reply(status_codes::OK, is, L"text/html"); });
 }
 
+
 void handlePost(http_request const& req) {
 
     auto path = req.relative_uri().to_string();
@@ -419,6 +421,7 @@ void handlePost(http_request const& req) {
         token = wcstok_s(nullptr, del, &helperPtr);
     }
     if (tokens.size() == 0) { req.reply(404U); }
+    //tokens is the part of the path with all the slashes
 
     if ((tokens[0]) == L"db") {
         handleDbPost(req, tokens);
@@ -426,8 +429,35 @@ void handlePost(http_request const& req) {
     else if (tokens[0] == L"auth") {
         handleLogin(req);
     }
+    else if (tokens[0] == L"writer") {
+        if (tokens[2] == L"publish") {
+            publish(req, std::stoi(tokens[1]), 1);
+        }
+        else if (tokens[2] == L"makeprivate") {
+            publish(req, std::stoi(tokens[1]), 2);
+        }
+        else req.reply(404U);
+    }
     else req.reply(404);
     cout << "personed" << endl;
+}
+
+void publish(http_request const& req, uint32_t id, uint32_t newPermission) { //sets the 'permission' aspect of the story, changing who can access it
+    Story story = dbp->pullStoryInfo(id);
+    User user;
+    if (!handleAuthentication(req, user)) return;
+    if (user.id != story.authorID && user.privilege < 3) {
+        req.reply(403U); //not the author or an admin
+        return;
+    }
+    //at this point we assume the user is authorized to make changes to this story
+    story.permission = newPermission; //the important line
+    if (dbp->updateStory(story)) {
+        req.reply(200U);
+    }
+    else req.reply(500U);
+    return;
+    
 }
 
 void handleDbPost(http_request const& req, vector<std::wstring> tokens) {
@@ -508,6 +538,8 @@ void handleLogin(http_request const& req) {
     return;
 }
 
+
+
 void handlePut(http_request const& req) {
 
     auto path = req.relative_uri().to_string();
@@ -518,7 +550,6 @@ void handlePut(http_request const& req) {
     wchar_t* pathC = (wchar_t*)path.c_str();
     wchar_t* del = (wchar_t*)L"/";
     wchar_t* helperPtr;
-    //rsize_t strmax = path.size();
     wchar_t* token = wcstok_s(pathC, del, &helperPtr);
     while (token != NULL)
     {
@@ -526,7 +557,7 @@ void handlePut(http_request const& req) {
         token = wcstok_s(nullptr, del, &helperPtr);
     }
     if (tokens.size() == 0) { req.reply(404U); }
-
+    //tokens is the part of the path with all the slashes
 
     if ((tokens[0]) == L"db") {
         handleDbPut(req, tokens);
@@ -608,7 +639,6 @@ void handleDbPut(http_request const& req, vector<std::wstring> tokens) {
     else req.reply(404);
 }
 
-
 void addStoryMetaDev(http_request const& req) {
     if (!handleAuthentication(req, 1)) {
         cout << "Couldn't add story: failed authentication" << endl;
@@ -671,6 +701,15 @@ void handleSignup(http_request const& req) {
     }
 }
 
+void autoSort(uint64_t miliseconds) {
+    while (true) { //execute until the end. Could tie this to a shared resource, but nah
+        std::this_thread::sleep_for(std::chrono::milliseconds(miliseconds));
+        cout << "resorting lists" << endl;
+        dbp->sortMostViewed();
+        dbp->sortTopRated();
+    }
+
+}
 
 int main(){
     dbp = new DBInterface("54.242.214.211", 33060, "app", "xH8#N7GmtILb", "website");
@@ -688,6 +727,7 @@ int main(){
 
     listener.support(web::http::methods::PUT, handlePut);
 
+    std::thread sorter(autoSort, 15000);
     
     try {
         listener.open().wait();

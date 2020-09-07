@@ -31,7 +31,7 @@ function StoryMetaCreator(){
     function handleSubmit(values){
         fetch(window.location.pathname, { //Try and add to the database
             method: "PUT",
-            headers: {'Content-Type': 'application/json', 'Authorization': "Basic " + btoa(auth.authTokens.id + ":" + auth.authTokens.password),},
+            headers: {'Content-Type': 'application/json', Authorization: auth.authTokens.head},
             body: JSON.stringify({title: values.title,})
         }).then(result => {
             if (result.status === 201) { //success. Added
