@@ -702,11 +702,16 @@ void handleSignup(http_request const& req) {
 }
 
 void autoSort(uint64_t miliseconds) {
+    Timer timer;
     while (true) { //execute until the end. Could tie this to a shared resource, but nah
         std::this_thread::sleep_for(std::chrono::milliseconds(miliseconds));
-        cout << "resorting lists" << endl;
+        
+        timer.Start();
         dbp->sortMostViewed();
         dbp->sortTopRated();
+        timer.Stop();
+        cout << "resorting lists took " << timer.Results() << " miliseconds" << endl;
+
     }
 
 }

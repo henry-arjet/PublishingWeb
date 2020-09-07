@@ -36,6 +36,7 @@
   <ItemGroup>
     <ClInclude Include="include\arjet\DBInterface.h" />
     <ClInclude Include="include\arjet\Sanitizer.h" />
+    <ClInclude Include="include\arjet\Timer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

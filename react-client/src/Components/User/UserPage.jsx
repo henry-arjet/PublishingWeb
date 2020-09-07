@@ -10,13 +10,19 @@ function UserPage() {
   let auth = useContext(AuthContext);
   const [results, setResults] = useState({});
   const [gotResults, setGotResults] = useState(false);
-  const [isLoggedIn, setLoggedIn] = useState(true);
-
+  const [isSelf, setIsSelf] = useState(false); //is this the user's own page
+  const pageID = location.pathname.substring(location.pathname.lastIndexOf("/") + 1);
 
   useEffect(() => {
+    
     fetch(window.location.protocol + "//" + window.location.host + location.pathname + '/stories?p=1', {
     headers: { Authorization: auth.authTokens.head,},
-    }).then(response => response.json()).then(data => setResults(data), setGotResults(true));
+    }).then(response => response.json())
+    .then(data => {
+      setResults(data);
+      setGotResults(true); 
+      });
+    gotResults.id == auth.authTokens.id?setIsSelf(true):setIsSelf(false);
   }, []); //this pattern of useEffect is basically componentDidMount
 
   function logout(){
@@ -25,14 +31,24 @@ function UserPage() {
     setLoggedIn(false);
   }
   
-    //  .then(response => response.json()).then(data => setResults(data), setGotResults(true));
+  const selfElements = () => {
+    if (isSelf){
+      return (
+        <div>
+          <p>Welcome, {auth.authTokens.username}</p>
+          <LinkContainer to="/new/meta"><Button variant="dark" className="paddedButton"> Upload New Story</Button></LinkContainer>
+          <Link to="/" onClick={logout} >Log Out</Link>
+        </div>
+      );
+    }
+  }
+  
   if(isLoggedIn){
     if(gotResults){
       return(
         <Container className="page">
-          <p>Welcome, {auth.authTokens.username}</p>
-          <LinkContainer to="/new/meta"><Button variant="dark" className="paddedButton"> Upload New Story</Button></LinkContainer>
-          <Link to="/" onClick={logout} >Log Out</Link>
+          {selfElements}
+          
           <CardGrid results={results} />
         </Container>
       );

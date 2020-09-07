@@ -185,10 +185,24 @@ uint DBInterface::addStory(Story story) {
 }
 
 void DBInterface::sortList(const std::string& path, unsigned int column) {
+	std::string keyString;
+	if (column == 3) {
+		keyString = "rating";
+	}
+	else if (column == 4) { 
+		keyString = "views"; 
+	}
+	else {
+		cout << "invalid column" << endl;
+		return;
+	}
+
+	//Timer timer;
+	//timer.Start();
 	//read current list of top rated
 	std::fstream file;
 
-	file.open(path, std::ios::ate | std::ios::binary | std::ios::in); //ios::app so we can use tellp
+	file.open(path, std::ios::ate | std::ios::binary | std::ios::in);
 	if (!file.is_open()) { cout << "Unable to open file" << endl; return; }
 	auto size = file.tellg();
 	file.seekg(0, std::ios::beg);
@@ -203,36 +217,34 @@ void DBInterface::sortList(const std::string& path, unsigned int column) {
 	}
 	file.close();
 
+	//timer.Stop();
+	//cout << "Opening file took " << timer.Results() << " miliseconds" << endl;
+	//timer.Start();
 	//fill sortList from database using the list from the file
 	vector <sortObject> sortList(readList.size());
 
 	Table table = db->getTable("test1");
 
-	for (int i = 0; i < readList.size(); i++) {
+	vector<RowResult> results(readList.size());
+	std::string queryString = "SELECT id, " + keyString + " FROM test1 WHERE id = " + std::to_string(readList[0]);
+	queryString.reserve(readList.size() * 50);
+	for (int i = 1; i < readList.size(); i++) {
 
-		semaphore.wait();
-		RowResult res = table.select().where("id = " + std::to_string(readList[i])).execute();
-		semaphore.notify();
-		Row row = res.fetchOne();
+		queryString.append(" UNION SELECT id, " + keyString + " FROM test1 WHERE id = " + std::to_string(readList[i]));
 
-		sortList[i].id = readList[i]; //since the id is what we selected by
-		sortList[i].key = row.get(column); //gets rating from 0-50000 (mapped to 0.0-5.0 client side)
 	}
+	queryString.append(";");
+	
 
-	//and tag all the ones that I just got
-	for (int i = 0; i < readList.size(); i++) { //there's probably a better way
-		semaphore.wait();
-		table.update().set("hit", 1).where("id = " + std::to_string(readList[i])).execute();
-		semaphore.notify();
-	}
-
-	//pull unlisted new entries AT END
-	//These will be the entries that haven't previously been sorted
+	//timer.Stop();
+	//cout << "Building the query string took " << timer.Results() << " miliseconds" << endl;
+	//timer.Start();
+	
+	RowResult res;
 	try {
 		semaphore.wait();
-		table.select().execute();
+		res = sesh->sql(queryString).execute();
 		semaphore.notify();
-		//RowResult remainers = table.select().where("hit = false").execute();
 	}
 	catch (const mysqlx::Error& err) {
 		semaphore.notify();
@@ -250,35 +262,61 @@ void DBInterface::sortList(const std::string& path, unsigned int column) {
 		throw;
 	}
 
+	//timer.Stop();
+	//cout << "Pulling results took " << timer.Results() << " miliseconds" << endl;
+	for (int i = 0; i < readList.size(); i++) {
+
+		Row row = res.fetchOne();
+
+		sortList[i].id = readList[i]; //since the id is what we selected by
+		sortList[i].key = row.get(1); //rating or views
+	}
+
+	//timer.Start();
+
+	//and tag all the ones that I just got
+	std::string ids = "id = " + std::to_string(readList[0]);
+	ids.reserve(readList.size() * 20);
+	for (int i = 1; i < readList.size(); i++) {
+		ids.append(" OR id = " + std::to_string(readList[i]));
+	}
+
+	//timer.Stop();
+	//cout << "Building ID list took " << timer.Results() << " miliseconds" << endl;
+	//timer.Start();
+	semaphore.wait();
+	table.update().set("hit", 1).where(ids).execute();
+	semaphore.notify();
+
+	//timer.Stop();
+	//cout << "updating hits took " << timer.Results() << " miliseconds" << endl;
+	//timer.Start();
+
+	//pull unlisted new entries AT END
+	//These will be the entries that haven't previously been sorted
+	
+
 	semaphore.wait();
 	RowResult remainers = table.select().where("hit = 0").execute();
 	semaphore.notify();
+
+	//timer.Stop();
+	//cout << "pulling unhits took " << timer.Results() << " miliseconds" << endl;
+	
 	auto rCount = remainers.count();
 	sortList.resize(sortList.size() + rCount); //adjust size to take the remainers into account
 
 	for (int i = readList.size(); i < rCount + readList.size(); i++) { //add the remainers to the sortList
 		Row row = remainers.fetchOne();
-		try {
-			sortList[i].id = row.get(0);
-		}
-		catch (const mysqlx::Error& err) {
-			cout << "ERROR: " << err << endl;
-			throw;
-		}
-		catch (std::exception& ex) {
-			cout << "STD EXCEPTION: " << ex.what() << endl;
-			throw;
-		}
-		catch (const char* ex) {
-			cout << "EXCEPTION: " << ex << endl;
-			throw;
-		}
+		sortList[i].id = row.get(0);
 		sortList[i].key = row.get(column);
 	}
-
+	//timer.Start();
 	//sort that vector via insertionSort
 	insertionSort(sortList);
-
+	//timer.Stop();
+	//cout << "insertionSort took " << timer.Results() << " miliseconds" << endl;
+	//timer.Start();
 	//save list
 	file.open(path, std::ios::trunc | std::ios::out | std::ios::binary);
 	if (!file.is_open()) { cout << "Unable to open file" << endl; return; }
@@ -287,9 +325,15 @@ void DBInterface::sortList(const std::string& path, unsigned int column) {
 		file.write((char*)&sortList[i].id, 4);
 	}
 	file.close();
+
+	//timer.Stop();
+	//cout << "writing file took " << timer.Results() << " miliseconds" << endl;
+	//timer.Start();
 	semaphore.wait();
 	table.update().set("hit", false).execute(); //reset the hit detector
 	semaphore.notify();
+	//timer.Stop();
+	//cout << "reseting hits took " << timer.Results() << " miliseconds" << endl;
 }
 
 void DBInterface::sortMostViewed() {
