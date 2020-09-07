@@ -271,7 +271,7 @@ void handleGetQuery(http_request const& req) {//For pulling from the db
 void handleGetQueryResults(http_request const& req, QueryMap queries){
     vector<Story> stories;
 
-    string where = "";
+    string where = ""; //DONT LET THE USER SET THIS
     std::wstring sqltest = L"";
     if (queries.find(L"sql") != queries.end()) {//where
         //This can be used for catagories, authors, etc. Right now it's useless
@@ -286,7 +286,11 @@ void handleGetQueryResults(http_request const& req, QueryMap queries){
     }
     if (queries.find(L"o") != queries.end()) {//order
         if (queries[L"o"] == L"top") {
+            Timer timer;
+            timer.Start();
             stories = dbp->pullTopRated(where, offset, lim);
+            timer.Stop();
+            cout << "Pulling top rated took " << timer.Results() << " miliseconds" << endl;
         }
         else if (queries[L"o"] == L"mv") {
             stories = dbp->pullMostViewed(where, offset, lim);
@@ -538,8 +542,6 @@ void handleLogin(http_request const& req) {
     return;
 }
 
-
-
 void handlePut(http_request const& req) {
 
     auto path = req.relative_uri().to_string();
@@ -701,6 +703,7 @@ void handleSignup(http_request const& req) {
     }
 }
 
+
 void autoSort(uint64_t miliseconds) {
     Timer timer;
     while (true) { //execute until the end. Could tie this to a shared resource, but nah
@@ -732,7 +735,7 @@ int main(){
 
     listener.support(web::http::methods::PUT, handlePut);
 
-    std::thread sorter(autoSort, 15000);
+    std::thread sorter(autoSort, 15*1000);
     
     try {
         listener.open().wait();
