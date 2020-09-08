@@ -17,9 +17,8 @@ import StoryMetaCreator from './StoryComponent/StoryMetaCreator';
 
 function App(props){
     const existingTokens = JSON.parse(localStorage.getItem("tokens"));
-    const backup = {authTokens: { id: 0, username: "", password: "", privilege: 0, head: ""}};
+    const backup = { id: 0, username: "", password: "", privilege: 0, head: ""};
     const [authTokens, setAuthTokens] = useState(existingTokens?existingTokens:backup); //if none found, use default
-
     const setTokens = (data) => { //I don't think I still use this?
       localStorage.setItem("tokens", JSON.stringify(data));
       setAuthTokens(data);

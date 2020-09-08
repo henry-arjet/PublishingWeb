@@ -219,6 +219,21 @@ uint32_t handleAuthentication(http_request const& req, User & user) {//Overload 
     return id;
 }
 
+uint32_t ip4StringToInt(const wstring& string) {
+    //dirty, but works
+    uint32_t ret = 0;
+    wstring helper = string;
+    ret += 0x01000000 * std::stoi(helper.substr(0, helper.find_first_of('.')));
+    helper = helper.substr(helper.find_first_of('.') + 1);
+    ret += 0x010000 * std::stoi(helper.substr(0, helper.find_first_of('.')));
+    helper = helper.substr(helper.find_first_of('.') + 1);
+    ret += 0x0100 * std::stoi(helper.substr(0, helper.find_first_of('.')));
+    helper = helper.substr(helper.find_first_of('.') + 1);
+    ret += std::stoi(helper);
+    return ret;
+}
+
+
 void handleGet(http_request const& req) {
 
     auto path = req.relative_uri().to_string();
@@ -308,9 +323,12 @@ void handleGetQueryResults(http_request const& req, QueryMap queries){
 
 void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap queries) {
     //Triggers if a query is called that mentions id. Pulls the specific story and sends the story along with the database entry as a JSON
-
+    wcout << "the IP of the user is " << req.remote_address() << endl;
+    uint32_t ip = ip4StringToInt((wchar_t*)req.remote_address().c_str());
+    cout << "or " << std::to_string(ip) << endl;
+    
     Story story = dbp->pullStoryInfo(id);
-    if (story.permission > 0) {
+    if (story.permission > 1) {
         User user;
         if (!handleAuthentication(req, user)) {
             return;
@@ -344,11 +362,9 @@ void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap q
 }
 
 void handleGetQueryProfile(http_request const& req, QueryMap queries) {
-    uint32_t id = handleAuthentication(req);
-    if (!id) {
-        req.reply(401U);
-        return;
-    }
+    auto path = req.relative_uri().path();
+    auto pathpt2 = path.substr(0, path.find_last_of('/')); //cuts it down to where the id is exposed
+    uint32_t id = std::stoi(pathpt2.substr(pathpt2.find_last_of('/') + 1));
 
     string where = "";
     std::wstring sqltest = L"";
@@ -361,14 +377,35 @@ void handleGetQueryProfile(http_request const& req, QueryMap queries) {
     if (queries.find(L"p") != queries.end()) {//which page
         offset = lim * (std::stoi(queries[L"p"]) - 1);
     }
-    vector<Story> stories = dbp->pullUserStories(id);
+
+    uint32_t access = 1;
+    if (queries[L"a"] == L"self") {
+        uint32_t reqID = handleAuthentication(req);
+        if (reqID != id) {
+            req.reply(403U);
+            return;
+        }
+        access = 2; //the user has the privilage to view her own unpublished stories
+    }
+    if (queries[L"a"] == L"admin") {
+        uint32_t reqID = handleAuthentication(req, 3);
+        if (!reqID) {
+            req.reply(401U);
+            return;
+        }
+        access = 2; //the user has the privilage to view her own unpublished stories
+    }
+
+    vector<Story> stories = dbp->pullUserStories(id, offset, lim, access);
     value arr = value::array();
     for (int i = 0; i < stories.size(); i++) {
         value temp = storyToJSON(stories[i]);
         arr[i] = temp;
     }
-
-    req.reply(status_codes::OK, arr);
+    value ret = value::object();
+    ret[L"results"] = arr;
+    ret[L"name"] = value(utility::conversions::utf8_to_utf16(dbp->pullUser(id).username));
+    req.reply(status_codes::OK, ret);
 
 }
 

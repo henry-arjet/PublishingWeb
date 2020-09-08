@@ -8,9 +8,9 @@ import { AuthContext } from '../Context/Auth';
 function NavBar() {
   let auth = useContext(AuthContext);
   function ProfileButton () {
-    if(auth.authTokens != null){ //check to see if we're logged in
+    if(auth.authTokens.id != 0){ //check to see if we're logged in
       return(
-        <LinkContainer to="/users/profile"><Nav.Link className="headerNavButton">
+        <LinkContainer to={"/users/" + auth.authTokens.id}><Nav.Link className="headerNavButton">
           <strong>My Profile</strong>
         </Nav.Link></LinkContainer>
       );  

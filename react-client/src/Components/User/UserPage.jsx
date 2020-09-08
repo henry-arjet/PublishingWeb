@@ -1,5 +1,5 @@
 import React, {useContext, useState, useEffect} from "react";
-import {Link} from "react-router-dom";
+import {Link, Redirect} from "react-router-dom";
 import { AuthContext } from "../Context/Auth";
 import CardGrid from "../Cards/CardGrid";
 import { Container, Button } from "react-bootstrap";
@@ -9,58 +9,62 @@ import { LinkContainer } from "react-router-bootstrap";
 function UserPage() {
   let auth = useContext(AuthContext);
   const [results, setResults] = useState({});
+  const [name, setName] = useState("");
   const [gotResults, setGotResults] = useState(false);
-  const [isSelf, setIsSelf] = useState(false); //is this the user's own page
+  //const [isSelf, setIsSelf] = useState(false); //is this the user's own page
   const pageID = location.pathname.substring(location.pathname.lastIndexOf("/") + 1);
-
+  const isSelf = pageID == auth.authTokens.id?true:false;
   useEffect(() => {
-    
-    fetch(window.location.protocol + "//" + window.location.host + location.pathname + '/stories?p=1', {
-    headers: { Authorization: auth.authTokens.head,},
-    }).then(response => response.json())
+    let path =location.pathname + '/stories?p=1';
+    isSelf?path += '&a=self':path+= '&a=public';
+    fetch(path, { headers: { Authorization: auth.authTokens.head,},})
+    .then(response => response.json())
     .then(data => {
-      setResults(data);
+      setResults(data.results);
+      setName(data.name);
       setGotResults(true); 
       });
-    gotResults.id == auth.authTokens.id?setIsSelf(true):setIsSelf(false);
+    //gotResults.id == auth.authTokens.id?setIsSelf(true):setIsSelf(false);
   }, []); //this pattern of useEffect is basically componentDidMount
 
   function logout(){
     localStorage.removeItem("tokens"); auth.authTokens = null;
-    auth.setAuthTokens(null);
-    setLoggedIn(false);
+    auth.setAuthTokens({ id: 0, username: "", password: "", privilege: 0, head: ""});
+    return(<Redirect to="/" />);
   }
   
   const selfElements = () => {
     if (isSelf){
       return (
         <div>
-          <p>Welcome, {auth.authTokens.username}</p>
+          <h3>Welcome, {auth.authTokens.username}</h3>
           <LinkContainer to="/new/meta"><Button variant="dark" className="paddedButton"> Upload New Story</Button></LinkContainer>
           <Link to="/" onClick={logout} >Log Out</Link>
         </div>
       );
     }
-  }
-  
-  if(isLoggedIn){
-    if(gotResults){
-      return(
-        <Container className="page">
-          {selfElements}
-          
-          <CardGrid results={results} />
-        </Container>
-      );
-    }else return(
+    else return(
       <div>
-        Fetching your profile...
+        <h2>{name}'s Page</h2>
+        <br></br>
       </div>
     );
   }
-  else {
-    return <Redirect to="/" />;
-  }
+  
+  if(gotResults){
+    return(
+      <Container className="page">
+        {selfElements()}
+        
+        <CardGrid results={results} />
+      </Container>
+    );
+  }else return(
+    <div>
+      Fetching profile...
+    </div>
+  );
 }
+
 
 export default UserPage;

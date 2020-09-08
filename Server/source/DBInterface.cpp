@@ -318,8 +318,8 @@ void DBInterface::sortTopRated() {
 }
 
 vector<Story> DBInterface::pullList(std::string tableName, std::string where, uint32_t offset, uint32_t limit, uint32_t permission) { 
-	semaphore.wait();
 	RowResult res;
+	semaphore.wait();
 	try{
 		res = sesh->sql(
 			"SELECT test1.* FROM " + tableName + 
@@ -400,53 +400,9 @@ Story DBInterface::pullStoryInfo(const uint32_t& id) {
 
 }
 
-vector<Story> DBInterface::pullUserStories(uint32_t id, uint32_t offset, uint32_t limit){
+vector<Story> DBInterface::pullUserStories(uint32_t id, uint32_t offset, uint32_t limit, uint32_t permission){
 	
-	vector<Story> ret;
-	ret.reserve(limit); //want to make sure we don't have empty values at the end if there aren't enough results. Thus we use reserve and pushBack
-
-	Table table = db->getTable("test1");
-	RowResult res;
-	try {
-		semaphore.wait();
-		res = table.select().where("author_id = " + std::to_string(id)).execute();
-		semaphore.notify();
-
-	}
-	catch (const mysqlx::Error& err) {
-		cout << "ERROR: " << err << endl;
-		throw;
-	}
-	catch (std::exception& ex) {
-		cout << "STD EXCEPTION: " << ex.what() << endl;
-		throw;
-	}
-	catch (const char* ex) {
-		cout << "EXCEPTION: " << ex << endl;
-		throw;
-	}
-
-	if (res.count()) { //If the catagories match and therefore we got a hit
-		try {
-
-			Row row = res.fetchOne();
-
-			while (row) {
-				Story story = { row.get(0), (std::string)row.get(1), (std::string)row.get(2), row.get(3), row.get(4), row.get(6), (unsigned int)row.get(7) };//add result to return vector
-				ret.push_back(story);
-				row = res.fetchOne();
-			}
-		}
-		catch (std::exception& ex) {
-			cout << "STD EXCEPTION: " << ex.what() << endl;
-			throw;
-		}
-		catch (const char* ex) {
-			cout << "EXCEPTION: " << ex << endl;
-			throw;
-		}
-	}
-	return ret;
+	return pullList("mostviewed", " AND author_id = " + std::to_string(id), offset, limit, permission);
 }
 
 uint32_t DBInterface::getNextIncrement() {
