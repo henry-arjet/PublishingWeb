@@ -62,6 +62,7 @@ void createContentMap() {
     contentMap[U(".html")] = U("text/html");
     contentMap[U(".js")] = U("application/javascript");
     contentMap[U(".css")] = U("text/css");
+    contentMap[U(".png")] == U("image/png");
 }
 
 void handle_error(pplx::task<void>& t) {
@@ -325,7 +326,8 @@ void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap q
     //Triggers if a query is called that mentions id. Pulls the specific story and sends the story along with the database entry as a JSON
     wcout << "the IP of the user is " << req.remote_address() << endl;
     uint32_t ip = ip4StringToInt((wchar_t*)req.remote_address().c_str());
-    cout << "or " << std::to_string(ip) << endl;
+    cout << "or " << std::hex << std::to_string(ip) << std::dec << endl;
+
     
     Story story = dbp->pullStoryInfo(id);
     if (story.permission > 1) {
@@ -772,7 +774,7 @@ int main(){
 
     listener.support(web::http::methods::PUT, handlePut);
 
-    std::thread sorter(autoSort, 15*1000);
+    std::thread sorter(autoSort, 60*1000);
     
     try {
         listener.open().wait();

@@ -55,3 +55,20 @@ footer {
 .paddedButton{
   margin: 0.5rem;
 }
+.stars{
+  width: 30rem;
+  justify-content: flex-start;
+  margin-left: 0;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+.star{
+  margin-left: 2px;
+  margin-right: 2px;
+}
+.packedP{
+  margin-bottom: 0.4rem;
+}
+.blockquote{
+  margin-left: 1.5rem;
+}
