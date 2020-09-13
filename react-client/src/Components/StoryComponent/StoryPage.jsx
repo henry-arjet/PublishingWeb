@@ -19,7 +19,9 @@ function StoryPage() {
       .then(data => {
         setHtml(data);  
         setGotResults(true);
-      });
+    });
+    fetch(window.location.pathname + "?t=v", {method:"PUT"});//add a view
+    
   }, []);//only calls on mount
   if (gotResults){
     return (

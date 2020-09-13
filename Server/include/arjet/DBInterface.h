@@ -50,6 +50,7 @@ public:
 	DBInterface(const std::string& host, uint32_t port, const std::string& user, const std::string& pass, const std::string& dbName);
 	
 	int addRating(uint32_t storyID, uint32_t userID, int8_t rating); //returns response code eg 200, 409, 404
+	int addView(uint32_t storyID, uint32_t userIP); //same
 
 	vector <uint32_t> *topRated = NULL; //Copy only! Will change due to external factors
 	//Also four billion should be enough
@@ -68,12 +69,13 @@ public:
 	uint32_t findRating(uint32_t userID, uint32_t storyID);//returns the rating
 	void sortTopRated(); //updates the topRated list stored in lists/top_rated.uil;
 	vector<Story> pullTopRated(std::string where = "", uint32_t offset = 0, uint32_t limit = uint32_t(20)); //Pulls results from the database using the toprated list
-	~DBInterface();
 
+	void updateViews();
 	void sortMostViewed();
 	vector<Story> pullMostViewed(std::string where = "", uint32_t offset = 0, uint32_t limit = uint32_t(20));
 
 	vector<Story> pullUserStories(uint32_t id, uint32_t offset = 0, uint32_t limit = uint32_t(20), uint32_t permission = 1); //Pulls results from the database matching user ID
+	~DBInterface();
 private:
 	Semaphore semaphore; 
 	vector<Story> pullList(std::string path, std::string where, uint32_t offset, uint32_t limit, uint32_t permission = 1);

@@ -184,25 +184,27 @@ uint DBInterface::addStory(Story story) {
 	}
 }
 
+
 void DBInterface::updateRating(uint32_t storyID) {
 	semaphore.wait();
 	sesh->sql("UPDATE test1 "
-		"SET "
-		"test1.rating = AVG(ratings.rating) * 1000, " //ratings are stored as uint8 0-50, average ratings are stored as uint16 0-50,000. 
+		"INNER JOIN(SELECT "
+			"test1.id, AVG(ratings.rating) * 1000 AS rating_average "
+		//ratings are stored as uint8 0-50, average ratings are stored as uint16 0-50,000. 
 		"FROM test1 "
 		"INNER JOIN "
 		"ratings "
 		"ON test1.id = ratings.story_id "
-		"WHERE test1.id = " + std::to_string(storyID) + ";");
+		"group by test1.id) "
+		"as b on test1.id = b.id "
+		"SET "
+		"test1.rating = b.rating_average "
+		"WHERE test1.id = " + std::to_string(storyID)).execute();
 	semaphore.notify();
 
 }
 void DBInterface::updateRatings() {
 	
-	Table test1 = db->getTable("test1");
-	Table ratings = db->getTable("ratings");
-	
-
 	semaphore.wait();
 	try{
 	sesh->sql( 
@@ -234,6 +236,23 @@ void DBInterface::updateRatings() {
 	semaphore.notify();
 }
 
+void DBInterface::updateViews() {
+	semaphore.wait();
+	sesh->sql(
+		"UPDATE test1 "
+		"INNER JOIN(SELECT "
+		"test1.id, COUNT(views.ipv4) hits "
+		"FROM test1 "
+		"INNER JOIN "
+		"views "
+		"ON test1.id = views.story_id "
+		"group by test1.id) "
+		"as b on test1.id = b.id "
+		"SET "
+		"test1.views = b.hits;").execute();
+	semaphore.notify();
+}
+
 uint32_t DBInterface::findRating(uint32_t userID, uint32_t storyID) {
 	Table table = db->getTable("ratings");
 	semaphore.wait();
@@ -261,6 +280,22 @@ int DBInterface::addRating(uint32_t storyID, uint32_t userID, int8_t rating) {
 
 	semaphore.wait();
 	table.insert().values(Value(), storyID, userID, rating).execute();
+	semaphore.notify();
+
+	return 200;
+}
+int DBInterface::addView(uint32_t storyID, uint32_t userIP) {
+	Table table = db->getTable("views");
+
+	semaphore.wait();
+	RowResult res = table.select("ipv4").where("ipv4 = " + std::to_string(userIP) + " AND story_id = " + std::to_string(storyID)).execute();
+	semaphore.notify();
+	if (res.count()) {
+		return 409;
+	}
+
+	semaphore.wait();
+	table.insert().values(storyID, userIP).execute();
 	semaphore.notify();
 
 	return 200;

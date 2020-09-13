@@ -234,7 +234,9 @@ uint32_t ip4StringToInt(const wstring& string) {
     ret += std::stoi(helper);
     return ret;
 }
-
+uint32_t getIP(http_request const& req) {
+    return ip4StringToInt(req.remote_address().c_str());
+}
 
 void handleGet(http_request const& req) {
 
@@ -630,12 +632,16 @@ void handlePutStory(http_request const& req, uint32_t id) {
     auto queries = web::uri::split_query(req.relative_uri().query());
     
     if (queries.find(L"t") != queries.end()) {//type of put
-        if (queries[L"t"] == L"r") {
+        if (queries[L"t"] == L"r") { //rating
             auto uid = handleAuthentication(req);
             if (!uid) return; //you must be logged in to rate
             int rating = std::stoi(queries[L"r"]);
             if (rating > 50 || rating < 5) { req.reply(400); return; } //invalid rating
             req.reply(dbp->addRating(id, uid, rating));
+        }
+        else if (queries[L"t"] == L"v") { //view
+            auto ip = getIP(req);
+            req.reply(dbp->addView(id, ip));
         }
         else req.reply(404);
     }
@@ -775,6 +781,7 @@ void autoSort(uint64_t miliseconds) {
         
         //timer.Start();
         dbp->updateRatings();
+        dbp->updateViews();
         //timer.Stop();
         //cout << "calculating ratings took " << timer.Results() << " miliseconds" << endl;
 
