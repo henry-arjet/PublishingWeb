@@ -184,6 +184,88 @@ uint DBInterface::addStory(Story story) {
 	}
 }
 
+void DBInterface::updateRating(uint32_t storyID) {
+	semaphore.wait();
+	sesh->sql("UPDATE test1 "
+		"SET "
+		"test1.rating = AVG(ratings.rating) * 1000, " //ratings are stored as uint8 0-50, average ratings are stored as uint16 0-50,000. 
+		"FROM test1 "
+		"INNER JOIN "
+		"ratings "
+		"ON test1.id = ratings.story_id "
+		"WHERE test1.id = " + std::to_string(storyID) + ";");
+	semaphore.notify();
+
+}
+void DBInterface::updateRatings() {
+	
+	Table test1 = db->getTable("test1");
+	Table ratings = db->getTable("ratings");
+	
+
+	semaphore.wait();
+	try{
+	sesh->sql( 
+		"UPDATE test1 "
+		"INNER JOIN(SELECT "
+			"test1.id, AVG(ratings.rating) * 1000 AS rating_average "
+			//ratings are stored as uint8 0-50, average ratings are stored as uint16 0-50,000. 
+			"FROM test1 "
+			"INNER JOIN "
+			"ratings "
+			"ON test1.id = ratings.story_id "
+			"group by test1.id) "
+		"as b on test1.id = b.id "
+		"SET "
+		"test1.rating = b.rating_average;").execute(); 
+	}
+	catch (const mysqlx::Error& err) {
+		cout << "ERROR: " << err << endl;
+		throw;
+	}
+	catch (std::exception& ex) {
+		cout << "STD EXCEPTION: " << ex.what() << endl;
+		throw;
+	}
+	catch (const char* ex) {
+		cout << "EXCEPTION: " << ex << endl;
+		throw;
+	}
+	semaphore.notify();
+}
+
+uint32_t DBInterface::findRating(uint32_t userID, uint32_t storyID) {
+	Table table = db->getTable("ratings");
+	semaphore.wait();
+	RowResult res = table.select("rating").where("story_id = " + std::to_string(storyID) + " AND user_id = " + std::to_string(userID)).execute();
+	semaphore.notify();
+	if (!res.count()) {
+		return 0; //null/no rating found
+	}
+	Row row = res.fetchOne();
+	return row.get(0);
+}
+
+
+int DBInterface::addRating(uint32_t storyID, uint32_t userID, int8_t rating) {
+	Table table = db->getTable("ratings");
+
+	semaphore.wait();
+	RowResult res = table.select("id").where("user_id = " + std::to_string(userID) + " AND story_id = " + std::to_string(storyID)).execute();
+	semaphore.notify();
+
+	if (res.count()) {
+		//updateRating(storyID);
+		return 409;
+	}
+
+	semaphore.wait();
+	table.insert().values(Value(), storyID, userID, rating).execute();
+	semaphore.notify();
+
+	return 200;
+}
+
 void DBInterface::sortList(const std::string& path, unsigned int column) {
 	std::string keyString;
 	std::string tableString;

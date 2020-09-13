@@ -4,28 +4,28 @@ import { Container, Row, Col } from 'react-bootstrap';
 
 function Rate(props){
     let [starsFilled, setStarsFilled] = useState([null]);//changes on mouseover
-    let [starsFilledPerm, setStarsFilledPerm] = useState([null]);//Does not change unless clicked
     let [starSelected, setStarSelected] = useState(null);
-    let [isConfirmed, setIsConfirmed] = useState(false); //props.meta.userRating !=0  once, ya know, meta.userRating exists
+    let [userRating, setUserRating] = useState(props.meta.userRating);
 
     let auth = useContext(AuthContext);
 
+    useEffect(() => {
+        handleMoueLeave(); //to set the stars in the first place
+      }, []);//only calls on mount
+
     function handleMoueLeave(){
-        if(!isConfirmed){
-            setStarsFilled([false])
-            setStarSelected(null);
+        let ret = [];
+        for (let i = 0; i < userRating; i+=5){
+            ret[i/5] = true;
         }
-        else{
-            setStarsFilled(starsFilledPerm);
-        }
+        setStarsFilled(ret);
     }
     function handleClick(){
-        setStarsFilledPerm(starsFilled);
-        setIsConfirmed(true);
-        fetch(window.location.pathname + "&t=r", {
+        let rating = (starSelected+1)*5; /*0-9 to 5-50*/
+        setUserRating(rating);
+        fetch(window.location.pathname + "?t=r&r=" +  rating, {
             method:"PUT", 
             headers: { Authorization: auth.authTokens.head},
-            body: (starSelected+1)*5 //0-9 to 5-50
         });
     }    
 

@@ -51,6 +51,7 @@ void publish(http_request const& req, uint32_t id, uint32_t newPermission);
 
 
 void handlePut(http_request const& req);
+void handlePutStory(http_request const& req, uint32_t id);
 void handlePutNew(http_request const& req, vector<std::wstring> tokens);
 void addStoryMeta(http_request const& req);
 void handlePutWriter(http_request const& req, uint32_t id);
@@ -324,10 +325,10 @@ void handleGetQueryResults(http_request const& req, QueryMap queries){
 
 void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap queries) {
     //Triggers if a query is called that mentions id. Pulls the specific story and sends the story along with the database entry as a JSON
-    wcout << "the IP of the user is " << req.remote_address() << endl;
+   
+    /* wcout << "the IP of the user is " << req.remote_address() << endl;
     uint32_t ip = ip4StringToInt((wchar_t*)req.remote_address().c_str());
-    cout << "or " << std::hex << std::to_string(ip) << std::dec << endl;
-
+    cout << "or " << std::hex << ip << std::dec << endl;*/
     
     Story story = dbp->pullStoryInfo(id);
     if (story.permission > 1) {
@@ -343,6 +344,11 @@ void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap q
 
     if (queries[L"t"] == L"m") {//request for metadata
         value storyJSON = storyToJSON(story);
+        if (req.headers().has(L"Authorization")) {
+            uint32_t id = handleAuthentication(req);
+            storyJSON[L"userRating"] = dbp->findRating(id, story.id);
+        }
+        else storyJSON[L"userRating"] = 0;
         req.reply(200U, storyJSON);
         return;
     }else if(queries[L"t"] == L"t"){//request for html file
@@ -581,6 +587,7 @@ void handleLogin(http_request const& req) {
     return;
 }
 
+
 void handlePut(http_request const& req) {
 
     auto path = req.relative_uri().to_string();
@@ -612,8 +619,27 @@ void handlePut(http_request const& req) {
     else if (tokens[0] == L"writer") {
         handlePutWriter(req, std::stoi(tokens[1]));
     }
+    else if (tokens[0] == L"story") {
+        handlePutStory(req, std::stoi(tokens[1]));
+    }
     else req.reply(404);
 
+}
+
+void handlePutStory(http_request const& req, uint32_t id) {
+    auto queries = web::uri::split_query(req.relative_uri().query());
+    
+    if (queries.find(L"t") != queries.end()) {//type of put
+        if (queries[L"t"] == L"r") {
+            auto uid = handleAuthentication(req);
+            if (!uid) return; //you must be logged in to rate
+            int rating = std::stoi(queries[L"r"]);
+            if (rating > 50 || rating < 5) { req.reply(400); return; } //invalid rating
+            req.reply(dbp->addRating(id, uid, rating));
+        }
+        else req.reply(404);
+    }
+    else req.reply(404);
 }
 
 void handlePutNew(http_request const& req, vector<std::wstring> tokens) {
@@ -659,7 +685,6 @@ void addStoryMeta(http_request const& req) {
 }
 
 void handlePutWriter(http_request const& req, uint32_t id) {
-    cout << "test" << endl;
     std::ofstream file;
     file.open("../Stories-Dirty/" + std::to_string(id) + ".html", std::ios::trunc); //saved in dirty as it is unsanitized user input
     std::vector<unsigned char> content = req.extract_vector().get();
@@ -748,12 +773,13 @@ void autoSort(uint64_t miliseconds) {
     while (true) { //execute until the end. Could tie this to a shared resource, but nah
         std::this_thread::sleep_for(std::chrono::milliseconds(miliseconds));
         
-        timer.Start();
+        //timer.Start();
+        dbp->updateRatings();
+        //timer.Stop();
+        //cout << "calculating ratings took " << timer.Results() << " miliseconds" << endl;
+
         dbp->sortMostViewed();
         dbp->sortTopRated();
-        timer.Stop();
-        cout << "resorting lists took " << timer.Results() << " miliseconds" << endl;
-
     }
 
 }
@@ -774,7 +800,7 @@ int main(){
 
     listener.support(web::http::methods::PUT, handlePut);
 
-    std::thread sorter(autoSort, 60*1000);
+    std::thread sorter(autoSort, 15*1000);
     
     try {
         listener.open().wait();

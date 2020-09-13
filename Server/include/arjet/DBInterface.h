@@ -49,6 +49,8 @@ public:
 	
 	DBInterface(const std::string& host, uint32_t port, const std::string& user, const std::string& pass, const std::string& dbName);
 	
+	int addRating(uint32_t storyID, uint32_t userID, int8_t rating); //returns response code eg 200, 409, 404
+
 	vector <uint32_t> *topRated = NULL; //Copy only! Will change due to external factors
 	//Also four billion should be enough
 
@@ -61,6 +63,9 @@ public:
 	bool updateStory(Story story);//returns true on success, false on fail
 	uint32_t addStory(Story story);//returns id on success, 0 on fail
 
+	void updateRating(uint32_t storyID);//recalculates average rating for a story
+	void updateRatings();//recalculates average rating for all stories
+	uint32_t findRating(uint32_t userID, uint32_t storyID);//returns the rating
 	void sortTopRated(); //updates the topRated list stored in lists/top_rated.uil;
 	vector<Story> pullTopRated(std::string where = "", uint32_t offset = 0, uint32_t limit = uint32_t(20)); //Pulls results from the database using the toprated list
 	~DBInterface();
