@@ -37,7 +37,7 @@ footer {
   cursor:pointer;
 }
 .storyCardStats{
-  display: fles;
+  display: flex;
   justify-content: space-between;
 }
 .page{
@@ -73,4 +73,15 @@ blockquote{
   border-left: 2px solid #ccc;
   margin-left: 1.5rem;
   padding-left: 1rem;
+}
+.flexR{
+  display: flex;
+  flex-direction: row-reverse;
+}
+.flexB{
+  display: flex;
+  flex-direction: column-reverse;
+}
+.inline {
+  display: inline-block;
 }

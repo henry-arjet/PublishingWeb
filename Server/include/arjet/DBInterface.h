@@ -7,6 +7,7 @@
 #include <Semaphore.h>
 #include <arjet/Timer.h>
 
+#define uint unsigned long
 
 using std::cout;
 using std::endl;
@@ -18,10 +19,12 @@ struct Story {
 	uint32_t id;
 	std::string title;
 	std::string path;
-	uint32_t rating;
-	uint32_t views;
-	uint32_t authorID;
+	unsigned int rating;
+	unsigned int views;
+	unsigned int authorID;
 	unsigned char permission;
+	long long timestamp;
+	std::string authorName;
 };
 
 struct User {
@@ -74,11 +77,14 @@ public:
 	void sortMostViewed();
 	vector<Story> pullMostViewed(std::string where = "", uint32_t offset = 0, uint32_t limit = uint32_t(20));
 
+	void sortNewest();
+	vector<Story> pullNewest(std::string where = "", uint32_t offset = 0, uint32_t limit = uint32_t(20));
+
 	vector<Story> pullUserStories(uint32_t id, uint32_t offset = 0, uint32_t limit = uint32_t(20), uint32_t permission = 1); //Pulls results from the database matching user ID
 	~DBInterface();
 private:
 	Semaphore semaphore; 
 	vector<Story> pullList(std::string path, std::string where, uint32_t offset, uint32_t limit, uint32_t permission = 1);
-	void sortList(const std::string& path, unsigned int column);//helper function for sorting. Inputs are the path to the uil and the db column used for the key
+	void sortList(unsigned int column);//helper function for sorting. Inputs are the path to the uil and the db column used for the key
 	uint32_t getNextIncrement();//Assumes threads have already been locked
 };

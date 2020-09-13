@@ -7,6 +7,7 @@ import { AuthContext } from '../Context/Auth';
 
 function NavBar() {
   let auth = useContext(AuthContext);
+  
   function ProfileButton () {
     if(auth.authTokens.id != 0){ //check to see if we're logged in
       return(
@@ -20,9 +21,18 @@ function NavBar() {
           <strong>Log In</strong>
         </Nav.Link></LinkContainer>
       );
-    }
-    
+    }  
   }
+  function DevTools(){
+    if(auth.authTokens.privilege > 2){ //check to see if we're allowed access to the dev tools
+      return(
+        <LinkContainer to={"/devtools"}><Nav.Link className="headerNavButton">
+          <strong>Dev Tools</strong>
+        </Nav.Link></LinkContainer>
+      );  
+    }else return null;
+  }
+
   return (
     <header fluid>
       <Navbar bg="light"> 
@@ -35,9 +45,10 @@ function NavBar() {
           <LinkContainer to="/mostviewed"><Nav.Link className="headerNavButton">
             <strong>Most Viewed</strong>
           </Nav.Link></LinkContainer>
-          <LinkContainer to="/devtools"><Nav.Link className="headerNavButton">
-            <strong>Dev Tools</strong>
+          <LinkContainer to="/newest"><Nav.Link className="headerNavButton">
+            <strong>New</strong>
           </Nav.Link></LinkContainer>
+          {DevTools()}
           {ProfileButton()}
           </Nav>
         </Navbar.Collapse>

@@ -69,7 +69,7 @@ function WritingPage() {
     <Container className="page">
       <Container className="storyEditor" >
           <Editor 
-            initialValue="<p>This is the initial content of the editor</p>"
+            initialValue="<p>Write your story here!</p>"
             init={{
               plugins: [
                 'link, paste, anchor, save',

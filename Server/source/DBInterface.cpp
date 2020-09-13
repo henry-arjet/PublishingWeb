@@ -2,7 +2,6 @@
 #include <mysqlx/xdevapi.h>
 using namespace mysqlx;
 
-typedef uint32_t uint;
 Session* sesh;
 Schema* db;
 DBInterface::DBInterface(const std::string& host, uint32_t port, const std::string& user, const std::string& pass, const std::string& dbName) {
@@ -33,7 +32,7 @@ DBInterface::DBInterface(const std::string& host, uint32_t port, const std::stri
 
 struct sortObject { //key/value uints
 	uint32_t id;
-	uint32_t key;
+	long long key;
 };
 
 void insertionSort(vector <sortObject>& objects) { //modifies the input vector
@@ -73,7 +72,7 @@ User DBInterface::pullUser(const uint32_t& id) {
 }
 
 uint32_t DBInterface::findUser(const std::string& username) {
-	uint ret = 0; //returns as 0 if not found
+	uint32_t ret = 0; //returns as 0 if not found
 	Table table = db->getTable("users");
 	RowResult res;
 	semaphore.wait();
@@ -143,14 +142,15 @@ bool DBInterface::updateStory(Story story){
 	}
 }
 
-uint DBInterface::addStory(Story story) {
+uint32_t DBInterface::addStory(Story story) {
 	Table table = db->getTable("test1");
 	try {
 		if (story.path == "") {//This means it's a auto-created story, most likely from a user
 			story.views = 0;
 			story.permission = 2;
+			story.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 			semaphore.wait();
-			table.insert().values(Value(), story.title, story.path, 50001, story.views, 0, story.authorID, story.permission).execute();
+			table.insert().values(Value(), story.title, story.path, 0, story.views, 0, story.authorID, story.permission, story.timestamp).execute();
 			story.id = table.select("LAST_INSERT_ID()").execute().fetchOne().get(0);
 			story.path = "stories/" + std::to_string(story.id) + ".html";
 			table.update().set("path", story.path).where("id = " + std::to_string(story.id)).execute();
@@ -160,7 +160,7 @@ uint DBInterface::addStory(Story story) {
 		}
 		else {
 			semaphore.wait();
-			table.insert().values(Value(), story.title, story.path, story.rating, story.views, 0, story.authorID, story.permission).execute();
+			table.insert().values(Value(), story.title, story.path, story.rating, story.views, 0, story.authorID, story.permission, story.timestamp).execute();
 			RowResult res = table.select("LAST_INSERT_ID()").execute();
 			semaphore.notify();
 			return res.fetchOne().get(0);
@@ -301,10 +301,14 @@ int DBInterface::addView(uint32_t storyID, uint32_t userIP) {
 	return 200;
 }
 
-void DBInterface::sortList(const std::string& path, unsigned int column) {
+void DBInterface::sortList(unsigned int column) {
 	std::string keyString;
 	std::string tableString;
-	if (column == 3) {
+	if (column == 2) {
+		keyString = "stamp";
+		tableString = "newest";
+	}
+	else if (column == 3) {
 		keyString = "rating";
 		tableString = "toprated";
 	}
@@ -426,12 +430,15 @@ void DBInterface::sortList(const std::string& path, unsigned int column) {
 }
 
 void DBInterface::sortMostViewed() {
-	sortList("../lists/most_viewed.uil", 4);
+	sortList(4);
 
 }
 
 void DBInterface::sortTopRated() {
-	sortList("../lists/top_rated.uil", 3);
+	sortList(3);
+}
+void DBInterface::sortNewest() {
+	sortList(2);
 }
 
 vector<Story> DBInterface::pullList(std::string tableName, std::string where, uint32_t offset, uint32_t limit, uint32_t permission) { 
@@ -439,8 +446,9 @@ vector<Story> DBInterface::pullList(std::string tableName, std::string where, ui
 	semaphore.wait();
 	try{
 		res = sesh->sql(
-			"SELECT test1.* FROM " + tableName + 
+			"SELECT test1.*, users.username FROM " + tableName + 
 			" INNER JOIN test1 ON " + tableName + ".id = test1.id"
+			" INNER JOIN users ON users.id = test1.author_id"
 			" WHERE permission <= " + std::to_string(permission) + where +
 			" ORDER BY ord"
 			" LIMIT " + std::to_string(limit) + " OFFSET " + std::to_string(offset)+
@@ -464,7 +472,7 @@ vector<Story> DBInterface::pullList(std::string tableName, std::string where, ui
 	vector<Story> ret(rSize);
 	for (uint i = 0; i < rSize; i++) {//for each result
 		Row row = res.fetchOne();
-		Story story = { row.get(0), (std::string)row.get(1), (std::string)row.get(2), row.get(3), row.get(4), row.get(6), (unsigned int)row.get(7) };//add result to return vector
+		Story story = { row.get(0), (std::string)row.get(1), (std::string)row.get(2), row.get(3), row.get(4), row.get(6), (unsigned int)row.get(7), row.get(8), (std::string)row.get(9) };//add result to return vector
 		ret[i] = story;
 	}
 
@@ -479,14 +487,16 @@ vector<Story> DBInterface::pullTopRated(std::string where, uint32_t offset, uint
 	return pullList("toprated", where, offset, limit);
 }
 
+vector<Story> DBInterface::pullNewest(std::string where, uint32_t offset, uint32_t limit) {
+	return pullList("newest", where, offset, limit);
+}
+
 Story DBInterface::pullStoryInfo(const uint32_t& id) {
 	Story ret = {};
-	Table table = db->getTable("test1");
-	string qString = "id = " + std::to_string(id);
 	RowResult res;
 	try {
 		semaphore.wait();
-		res = table.select().where(qString).execute();
+		res = sesh->sql("SELECT test1.*, users.username FROM test1 INNER JOIN users ON test1.author_id = users.id WHERE test1.id = " + std::to_string(id)).execute();
 		semaphore.notify();
 	}
 	catch (const mysqlx::Error& err) {
@@ -512,6 +522,8 @@ Story DBInterface::pullStoryInfo(const uint32_t& id) {
 	ret.views = row.get(4);
 	ret.authorID = row.get(6);
 	ret.permission = (unsigned int)row.get(7);
+	ret.timestamp = row.get(8);
+	ret.authorName = (std::string)row.get(9);
 
 	return ret;
 

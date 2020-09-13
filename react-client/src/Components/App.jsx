@@ -14,6 +14,7 @@ import SignUpPage from './Authentication/SignUpPage';
 import UserPage from './User/UserPage';
 import WritingPage from './StoryComponent/WritingPage';
 import StoryMetaCreator from './StoryComponent/StoryMetaCreator';
+import NewestPage from './NewestPage';
 
 function App(props){
     const existingTokens = JSON.parse(localStorage.getItem("tokens"));
@@ -39,6 +40,7 @@ function App(props){
               <Route name="login" path="/auth/login" component={LoginPage}/>
               <Route name="signup" path="/auth/signup" component={SignUpPage}/>
               <PrivateRoute name="writer" path="/writer" component={WritingPage}/>
+              <Route name="newest" path="/newest" component={NewestPage}/>
             </switch>
             <Footer />
           </div>

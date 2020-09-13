@@ -16,12 +16,23 @@ class StoryCard extends Component {
                 <LinkContainer to = {"/" + this.props.link}>
                     <Card.Body>
                         <Card.Title>{this.props.title}</Card.Title>
-                        <Container >
-                            <Row className="StoryCardStats">
-                                <Card.Text as="Col">{this.props.rating != null ? this.props.rating + "/5.0": "Unrated"}</Card.Text>
-                                <Col />
-                                <Card.Text as="Col">{this.props.views + " views"}</Card.Text>
-                            </Row>
+                        <Container className="storyCardStats">
+                            <Col>
+                                <Row>
+                                    <Card.Text as="Col">{this.props.time + " ago"}</Card.Text>
+                                </Row>
+                                <Row>
+                                    <Card.Text>
+                                        {this.props.rating != null ? this.props.rating + "/5.0  ": "Unrated  "}
+                                        {this.props.views + " views"}
+                                    </Card.Text>
+                                </Row>
+                            </Col>
+                            <Col className = "flexR">
+                                <Row className = "flexB">
+                                    <LinkContainer to = {"/users/" + this.props.authorID}><Card.Link>{this.props.authorName}</Card.Link></LinkContainer>
+                                </Row>
+                            </Col>
                         </Container>
                     </Card.Body>
                 </LinkContainer>

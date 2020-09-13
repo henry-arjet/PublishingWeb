@@ -87,6 +87,8 @@ value storyToJSON(const Story& story){
     obj[L"views"] = value::number(story.views);
     obj[L"authorID"] = value::number(story.authorID);
     obj[L"permission"] = value::number(story.permission);
+    obj[L"timestamp"] = value::number(story.timestamp);
+    obj[L"authorName"] = value::string(utility::conversions::utf8_to_utf16(story.authorName));
     return obj;
 }
 
@@ -106,6 +108,9 @@ Story JSONToStory(value obj) { //NOT safe. Must make safe elsewhere
     story.views = stoi(obj[L"views"].as_string());
     story.authorID = stoi(obj[L"authorID"].as_string());
     story.permission = stoi(obj[L"permission"].as_string());
+    story.timestamp = stoi(obj[L"timestamp"].as_string());
+    story.authorName = utility::conversions::utf16_to_utf8(obj[L"authorName"].as_string());
+
     return story;
 }
 
@@ -305,14 +310,13 @@ void handleGetQueryResults(http_request const& req, QueryMap queries){
     }
     if (queries.find(L"o") != queries.end()) {//order
         if (queries[L"o"] == L"top") {
-            Timer timer;
-            timer.Start();
             stories = dbp->pullTopRated(where, offset, lim);
-            timer.Stop();
-            cout << "Pulling top rated took " << timer.Results() << " miliseconds" << endl;
         }
         else if (queries[L"o"] == L"mv") {
             stories = dbp->pullMostViewed(where, offset, lim);
+        }
+        else if (queries[L"o"] == L"new") {
+            stories = dbp->pullNewest(where, offset, lim);
         }
     }
 
@@ -784,7 +788,7 @@ void autoSort(uint64_t miliseconds) {
         dbp->updateViews();
         //timer.Stop();
         //cout << "calculating ratings took " << timer.Results() << " miliseconds" << endl;
-
+        dbp->sortNewest();
         dbp->sortMostViewed();
         dbp->sortTopRated();
     }
