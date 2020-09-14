@@ -32,7 +32,7 @@ DBInterface::DBInterface(const std::string& host, uint32_t port, const std::stri
 
 struct sortObject { //key/value uints
 	uint32_t id;
-	long long key;
+	int64_t key;
 };
 
 void insertionSort(vector <sortObject>& objects) { //modifies the input vector

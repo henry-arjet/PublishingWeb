@@ -9,7 +9,7 @@ public:
 	void Stop() {
 		duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - startTime).count();
 	}
-	auto Results(){
+	long long Results(){
 		return duration;
 	}
 private:

@@ -81,15 +81,15 @@ struct queryItem {
 
 value storyToJSON(const Story& story){
     value obj = value::object();
-    obj[L"id"] = value::number(story.id);
-    obj[L"title"] = value::string(utility::conversions::utf8_to_utf16(story.title));
-    obj[L"path"] = value::string(utility::conversions::utf8_to_utf16(story.path));
-    obj[L"rating"] = value::number(story.rating);
-    obj[L"views"] = value::number(story.views);
-    obj[L"authorID"] = value::number(story.authorID);
-    obj[L"permission"] = value::number(story.permission);
-    obj[L"timestamp"] = value::number(story.timestamp);
-    obj[L"authorName"] = value::string(utility::conversions::utf8_to_utf16(story.authorName));
+    obj[U("id")] = value::number(story.id);
+    obj[U("title")] = value(utility::conversions::utf8_to_utf16(story.title));
+    obj[U("path")] = value::string(utility::conversions::utf8_to_utf16(story.path));
+    obj[U("rating")] = value::number(story.rating);
+    obj[U("views")] = value::number(story.views);
+    obj[U("authorID")] = value::number(story.authorID);
+    obj[U("permission")] = value::number(story.permission);
+    obj[U("timestamp")] = value::number(story.timestamp);
+    obj[U("authorName")] = value::string(utility::conversions::utf8_to_utf16(story.authorName));
     return obj;
 }
 

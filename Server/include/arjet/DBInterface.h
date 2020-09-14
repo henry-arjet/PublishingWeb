@@ -23,7 +23,7 @@ struct Story {
 	unsigned int views;
 	unsigned int authorID;
 	unsigned char permission;
-	long long timestamp;
+	int64_t timestamp;
 	std::string authorName;
 };
 

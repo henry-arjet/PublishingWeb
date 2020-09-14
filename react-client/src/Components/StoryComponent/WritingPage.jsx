@@ -19,6 +19,7 @@ function WritingPage() {
   let auth = useContext(AuthContext);
   let [meta, setMeta] = useState(null);
   let [isPublic, setIsPublic] = useState(false);
+  const [shouldRedirect, setShouldRedirect] = useState(0);
 
   function load(){
     console.log("loading");
@@ -54,10 +55,21 @@ function WritingPage() {
     }
   };
 
+  function testRedirect(){
+    if (shouldRedirect != 0){
+        return(
+            <Redirect to= {"/story/" + shouldRedirect}/>
+        );
+    }
+  }
+
   const publish = () => {
+    handleSubmit();
     fetch(window.location.pathname + "/publish", {method: 'POST',
       headers: { Authorization: auth.authTokens.head}
-    });
+    }).then(setShouldRedirect(meta.id));
+    
+    <Redirect to= {"/writer/" + shouldRedirect}/>
   }
   const makePrivate = () => {
     fetch(window.location.pathname + "/makeprivate", {method: 'POST',
@@ -67,6 +79,7 @@ function WritingPage() {
   
   return(
     <Container className="page">
+      {testRedirect()}
       <Container className="storyEditor" >
           <Editor 
             initialValue="<p>Write your story here!</p>"

@@ -4,9 +4,15 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <StartupObject>Sanitizer.Program</StartupObject>
+    <Configurations>Debug;Release;Linux</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <PlatformTarget>x64</PlatformTarget>
+    <OutputPath>C:\Users\Henry\Documents\PublishingWeb\SanitizerBuild\</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Linux|AnyCPU'">
     <PlatformTarget>x64</PlatformTarget>
     <OutputPath>C:\Users\Henry\Documents\PublishingWeb\SanitizerBuild\</OutputPath>
   </PropertyGroup>
