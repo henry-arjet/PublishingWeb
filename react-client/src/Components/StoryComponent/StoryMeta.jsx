@@ -101,9 +101,9 @@ function StoryMeta() {
   }
   function Author(){
     return( 
-    <h3 className = "inline">
+    <h4 className = "inline">
       By: <Link to={"/users/" + meta.authorID}>{meta.authorName}</Link>
-    </h3>
+    </h4>
     
     );
   }

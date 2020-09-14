@@ -42,6 +42,7 @@ void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap q
 void handleGetQueryProfile(http_request const& req, QueryMap queries);
 void handleGetFile(http_request const& req);
 void handleGetRoot(http_request const& req);
+void handleGetBundleCache(http_request const& req);
 
 void handlePost(http_request const& req);
 void handleDbPost(http_request const& req, vector<std::wstring> tokens);
@@ -246,13 +247,17 @@ uint32_t getIP(http_request const& req) {
 void handleGet(http_request const& req) {
 
     auto path = req.relative_uri().to_string();
-    std::wcout << L"GET called at " << path << endl;
+    //std::wcout << L"GET called at " << path << endl;
     
     if (req.relative_uri().query().size() != 0) { //yes yes I know != 0 is unnecessary but it's easier to read
         handleGetQuery(req);
     }
     else if (req.relative_uri().path().find_last_of(L'.') != std::wstring::npos) {
-        handleGetFile(req);
+        auto len = req.relative_uri().path().size();
+        if (req.relative_uri().path().substr(len - 10, 10) == L"cbundle.js") {//cached js app
+            handleGetBundleCache(req);
+        }
+        else handleGetFile(req);
     }
     else {
         handleGetRoot(req);
@@ -434,28 +439,38 @@ void handleGetFile(http_request const& req) {
     wstring content_type = content_type_it->second;
 
 
-    concurrency::streams::fstream::open_istream(path, std::ios::in)
-        .then([=](concurrency::streams::istream is) {
-        req.reply(200U, is, content_type).then([](pplx::task<void> t) { handle_error(t); });
-    })
-        .then([=](pplx::task<void> t) {
-        try
-        {
-            t.get();
-        }
-        catch (...)
-        {
-            // opening the file (open_istream) failed.
-            // Reply with an error.
-            req.reply(404U).then([](pplx::task<void> t) { handle_error(t); });
-        }
-    });
+    concurrency::streams::istream is = concurrency::streams::fstream::open_istream(path, std::ios::in).get();
+    req.reply(200U, is, content_type).then([](pplx::task<void> t) { handle_error(t); }).wait();
+    is.close();
 }
 
 void handleGetRoot(http_request const& req) {
-    concurrency::streams::fstream::open_istream(distFolder + L"index.html", std::ios::in)
-        .then([=](concurrency::streams::istream is) {
-        req.reply(status_codes::OK, is, L"text/html"); });
+    concurrency::streams::istream is = concurrency::streams::fstream::open_istream(distFolder + L"index.html", std::ios::in).get();
+    req.reply(200U, is, L"text/html").then([](pplx::task<void> t) { handle_error(t); }).wait();
+    is.close();
+}
+
+void handleGetBundleCache(http_request const& req) {
+    if (req.headers().has(L"If-None-Match")) { //Firefox has strict cache rules. I use a different caching system from wha it wants
+        req.reply(304U);
+    }
+    else {
+        auto path = distFolder + req.relative_uri().path();
+        concurrency::streams::istream is = concurrency::streams::fstream::open_istream(path, std::ios::in).get();
+        web::http::http_response res = web::http::http_response(200U);
+        res.set_body(is);
+        web::http::http_headers head;
+
+        head[L"Content-Type"] = L"application/javascript";
+        head[L"Cache-Control"] = L"public, max-age=6048000, immutable";
+        head[L"ETag"] = L"WhyFirefoxWhy";
+        res.headers() = head;
+        req.reply(res).then([](pplx::task<void> t) { handle_error(t); }).wait();
+        is.close();
+    }
+    
+
+    
 }
 
 
@@ -494,7 +509,6 @@ void handlePost(http_request const& req) {
         else req.reply(404U);
     }
     else req.reply(404);
-    cout << "personed" << endl;
 }
 
 void publish(http_request const& req, uint32_t id, uint32_t newPermission) { //sets the 'permission' aspect of the story, changing who can access it
@@ -597,7 +611,7 @@ void handleLogin(http_request const& req) {
 void handlePut(http_request const& req) {
 
     auto path = req.relative_uri().to_string();
-    std::wcout << L"PUT called at " << path << endl;
+    //std::wcout << L"PUT called at " << path << endl;
 
     //break path into tokens
     vector<std::wstring> tokens;
@@ -811,7 +825,7 @@ int main(){
 
     listener.support(web::http::methods::PUT, handlePut);
 
-    std::thread sorter(autoSort, 15*1000);
+    std::thread sorter(autoSort, 300*1000);
     
     try {
         listener.open().wait();
