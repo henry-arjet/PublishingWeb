@@ -41,7 +41,8 @@ footer {
   justify-content: space-between;
 }
 .page{
-  margin-left: 3rem;
+  margin-left: 10rem;
+  margin-right: 10rem;
   margin-bottom: 1rem;
 }
 

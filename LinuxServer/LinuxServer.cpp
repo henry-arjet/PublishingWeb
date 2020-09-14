@@ -59,7 +59,7 @@ void addStoryMetaDev(http_request const& req);
 void handleSignup(http_request const& req);
 
 void createContentMap() {
-    contentMap[U(".htm")] = U("text/htm");
+    contentMap[U(".html")] = U("text/html");
     contentMap[U(".js")] = U("application/javascript");
     contentMap[U(".css")] = U("text/css");
     contentMap[U(".png")] == U("image/png");
@@ -242,8 +242,24 @@ uint32_t getIP(http_request const& req) {
     return ip4StringToInt(req.remote_address().c_str());
 }
 
-void handleGet(http_request const& req) {
+vector<std::string> splitTokens(http_request const& req) {
 
+    vector<std::string> tokens;
+    string s = '/' + (string)req.absolute_uri().path() + '/'; //add the slashes so it won't ignore anything
+
+    std::string delimiter = "/";
+    size_t pos = 0;
+    std::string token;
+    while ((pos = s.find(delimiter)) != std::string::npos) {
+        token = s.substr(0, pos);
+        if (token != "") tokens.push_back(token);
+        s.erase(0, pos + delimiter.length());
+    }
+    return tokens;
+}
+
+
+void handleGet(http_request const& req) {
     auto path = req.relative_uri().to_string();
     std::cout << "GET called at " << path << endl;
 
@@ -265,23 +281,9 @@ void handleGet(http_request const& req) {
 void handleGetQuery(http_request const& req) {//For pulling from the db
     //break path into tokens
 
-    //TODO clean this tf up
-    //Also move to its own function
-    vector<std::string> tokens;
-    char* pathC = (char*)req.absolute_uri().path().c_str();
-    char* del = (char*)"/";
-    char* helperPtr;
-    char* token = strtok(pathC, del);
-
-    while (token != NULL)
-    {
-        tokens.push_back(token);
-        token = strtok(nullptr, del);
-    }
+    vector<std::string> tokens = splitTokens(req);
     if (tokens.size() == 0) { req.reply(404U); return; }
-
     auto queries = web::uri::split_query(req.relative_uri().query());
-
     if (tokens[0] == "users") {
         handleGetQueryProfile(req, queries);
     }
@@ -324,6 +326,7 @@ void handleGetQueryResults(http_request const& req, QueryMap queries) {
     }
 
     value arr = value::array();
+    cout << stories.size() << endl;
     for (int i = 0; i < stories.size(); i++) {
         value temp = storyToJSON(stories[i]);
         arr[i] = temp;
@@ -338,7 +341,6 @@ void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap q
     /* cout << "the IP of the user is " << req.remote_address() << endl;
     uint32_t ip = ip4StringToInt((wchar_t*)req.remote_address().c_str());
     cout << "or " << std::hex << ip << std::dec << endl;*/
-
     Story story = dbp->pullStoryInfo(id);
     if (story.permission > 1) {
         User user;
@@ -353,9 +355,15 @@ void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap q
 
     if (queries["t"] == "m") {//request for metadata
         value storyJSON = storyToJSON(story);
+
         if (req.headers().has("Authorization")) {
-            uint32_t id = handleAuthentication(req);
-            storyJSON["userRating"] = dbp->findRating(id, story.id);
+            auto head = req.headers();
+            if (head["Authorization"] != "") {
+
+                uint32_t id = handleAuthentication(req);
+                storyJSON["userRating"] = dbp->findRating(id, story.id);
+            }
+            else storyJSON["userRating"] = 0;
         }
         else storyJSON["userRating"] = 0;
         req.reply(200U, storyJSON);
@@ -364,14 +372,16 @@ void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap q
     else if (queries["t"] == "t") {//request for html file
         std::wifstream file;
         string path = "../" + story.path;
+        cout << path << endl;
         try {
             concurrency::streams::fstream::open_istream(path, std::ios::in)
                 .then([=](concurrency::streams::istream is) {
-                req.reply(200U, is, "text/htm");
+                req.reply(200U, is, "text/html");
                     }).wait(); //need to wait for the try block to work
                     return;
         }
         catch (...) { //Catches if file not found. So reply with 404
+            cout << "Story file not found" << endl;
             req.reply(404u);
             return;
         }
@@ -380,10 +390,9 @@ void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap q
 }
 
 void handleGetQueryProfile(http_request const& req, QueryMap queries) {
-    auto path = req.relative_uri().path();
-    auto pathpt2 = path.substr(0, path.find_last_of('/')); //cuts it down to where the id is exposed
-    uint32_t id = std::stoi(pathpt2.substr(pathpt2.find_last_of('/') + 1));
+    auto tokens = splitTokens(req);
 
+    uint32_t id = std::stoi(tokens[1]);
     string where = "";
     std::string sqltest = "";
 
@@ -413,7 +422,6 @@ void handleGetQueryProfile(http_request const& req, QueryMap queries) {
         }
         access = 2; //the user has the privilage to view her own unpublished stories
     }
-
     vector<Story> stories = dbp->pullUserStories(id, offset, lim, access);
     value arr = value::array();
     for (int i = 0; i < stories.size(); i++) {
@@ -491,21 +499,7 @@ void handleGetBundleCache(http_request const& req) {
 
 void handlePost(http_request const& req) {
 
-    auto path = req.relative_uri().to_string();
-    std::cout << "POST called at " << path << endl;
-
-    //break path into tokens
-    vector<std::string> tokens;
-    char* pathC = (char*)req.absolute_uri().path().c_str();
-    char* del = (char*)"/";
-    char* helperPtr;
-    char* token = strtok(pathC, del);
-
-    while (token != NULL)
-    {
-        tokens.push_back(token);
-        token = strtok(nullptr, del);
-    }
+    auto tokens = splitTokens(req);
     if (tokens.size() == 0) { req.reply(404U); return; }
     //tokens is the part of the path with all the slashes
 
@@ -625,24 +619,7 @@ void handleLogin(http_request const& req) {
 
 
 void handlePut(http_request const& req) {
-
-    auto path = req.relative_uri().to_string();
-    std::cout << "PUT called at " << path << endl;
-
-    //break path into tokens
-    vector<std::string> tokens;
-    char* pathC = (char*)req.absolute_uri().path().c_str();
-    char* del = (char*)"/";
-    char* helperPtr;
-    char* token = strtok(pathC, del);
-
-    while (token != NULL)
-    {
-        tokens.push_back(token);
-        token = strtok(nullptr, del);
-    }
-    if (tokens.size() == 0) { req.reply(404U); return; }
-    //tokens is the part of the path with all the slashes
+    auto tokens = splitTokens(req);
 
     if ((tokens[0]) == "db") {
         handleDbPut(req, tokens);
@@ -727,12 +704,13 @@ void addStoryMeta(http_request const& req) {
 
 void handlePutWriter(http_request const& req, uint32_t id) {
     std::ofstream file;
-    file.open("../Stories-Dirty/" + std::to_string(id) + ".htm", std::ios::trunc); //saved in dirty as it is unsanitized user input
+    file.open("../Stories-Dirty/" + std::to_string(id) + ".html", std::ios::trunc); //saved in dirty as it is unsanitized user input
     std::vector<unsigned char> content = req.extract_vector().get();
     file.write(reinterpret_cast<char*>(content.data()), content.size());
     file.close();
-    std::system("../SanitizerBuild/netcoreapp3.1/Sanitizer.exe");
-    //launches the C#-based sanitizer to prevent xss. Outputs the cleaned stories into ../Stories
+    std::system("sudo ../SanitizerBuild/Sanitizer");
+    //launches the C#-based sanitizer to prevent xss. Outputs the cleaned stories into ../stories
+    req.reply(201U);
 }
 
 void handleDbPut(http_request const& req, vector<std::string> tokens) {
@@ -828,11 +806,11 @@ void autoSort(uint64_t miliseconds) {
 }
 
 int main() {
-    dbp = new DBInterface("54.242.214.211", 33060, "app", "xH8#N7GmtILb", "website");
-
-    const std::string base_url = U("http://*:8080");
-
-
+    
+    //dbp = new DBInterface("54.242.214.211", 33060, "app", "xH8#N7GmtILb", "website"); //internet address
+    dbp = new DBInterface("172.26.5.20", 33060, "app", "xH8#N7GmtILb", "website"); //local address
+    
+    const std::string base_url = "http://0.0.0.0:80/";
     web::http::experimental::listener::http_listener listener(base_url);
 
     createContentMap();
@@ -863,9 +841,7 @@ int main() {
 
     std::cout << std::string(U("Listining for requests at: ")) << base_url << std::endl;
 
-    std::string line;
-    cout << "Hit Enter to close the listner.\n";
-    std::getline(std::cin, line);
+    std::this_thread::sleep_for(std::chrono::hours(10000));
 
     listener.close().wait();
 }

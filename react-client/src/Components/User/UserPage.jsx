@@ -15,7 +15,7 @@ function UserPage() {
   const pageID = location.pathname.substring(location.pathname.lastIndexOf("/") + 1);
   const isSelf = pageID == auth.authTokens.id?true:false;
   useEffect(() => {
-    let path =location.pathname + '/stories?p=1';
+    let path =location.pathname + '/stories/?p=1';
     isSelf?path += '&a=self':path+= '&a=public';
     fetch(path, { headers: { Authorization: auth.authTokens.head,},})
     .then(response => response.json())

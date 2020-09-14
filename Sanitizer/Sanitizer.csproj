@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RuntimeIdentifiers>ubuntu.14.04-x64;win10-x64</RuntimeIdentifiers>
     <StartupObject>Sanitizer.Program</StartupObject>
     <Configurations>Debug;Release;Linux</Configurations>
   </PropertyGroup>

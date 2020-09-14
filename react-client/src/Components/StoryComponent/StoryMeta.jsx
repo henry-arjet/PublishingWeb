@@ -12,7 +12,7 @@ function StoryMeta() {
   let auth = useContext(AuthContext);
 
   useEffect(() => {
-    fetch(window.location.pathname + "?t=m&id=" + window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1),
+    fetch(window.location.pathname + "/?t=m&id=" + window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1),
       {headers: {Authorization: auth.authTokens.head,},})
       .then(response => response.json())
       .then(data => {

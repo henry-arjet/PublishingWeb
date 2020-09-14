@@ -97,10 +97,6 @@ function SignUpForm(){
                     {formik.errors.password2}
                 </Form.Control.Feedback>
             </Form.Group>
-            <Form.Group controlId="email">
-                <Form.Label>Email</Form.Label>
-                <Form.Control type="text" placeholder="Psych bitch you thought we had email systems lmao" readOnly />
-            </Form.Group>
             <Button variant="dark" type="submit">Let's Do It</Button>
         </Form>
     )

@@ -26,7 +26,7 @@ namespace Sanitizer
             HtmlSanitizer sanitizer = new HtmlSanitizer();
             string cleanHtml = sanitizer.Sanitize(html);
 
-            File.WriteAllText("../Stories/" + name, cleanHtml);
+            File.WriteAllText("../stories/" + name, cleanHtml);
         }
     }
 }

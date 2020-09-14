@@ -1,6 +1,7 @@
 import React, {useContext, useState, useEffect} from "react";
 import { AuthContext } from "../Context/Auth";
 import { Container, Button} from "react-bootstrap";
+import { Redirect } from "react-router";
 
 import { Editor } from '@tinymce/tinymce-react';
 import tinymce from 'tinymce/tinymce';
@@ -10,9 +11,8 @@ import 'tinymce/themes/silver';
 import 'tinymce/plugins/paste';
 import 'tinymce/plugins/link';
 import 'tinymce/plugins/anchor';
+import 'tinymce/plugins/code';
 import 'tinymce/plugins/save';
-
-
 
 //This page is put behind a private route, so it should only be accessed if the user authtokens are filled
 function WritingPage() {
@@ -26,7 +26,7 @@ function WritingPage() {
     let id = window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1);
     let path1 = window.location.pathname.substring(0,window.location.pathname.lastIndexOf("/")) //There is most likely a better way to do this
     let path = window.location.origin + "/" + path1.substring(0,path1.lastIndexOf("/")) + "story";
-    fetch(path + "/" + id + "?t=t&id=" + id,{
+    fetch(path + "/" + id + "/?t=t&id=" + id,{
       headers: {Authorization: auth.authTokens.head},})
     .then(response => response.text())
     .then(data => {if(data)tinyMCE.activeEditor.setContent(data)});
@@ -36,7 +36,7 @@ function WritingPage() {
     let id = window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1);
     let path1 = window.location.pathname.substring(0,window.location.pathname.lastIndexOf("/")) //There is most likely a better way to do this
     let path = window.location.origin + "/" + path1.substring(0,path1.lastIndexOf("/")) + "story";
-    fetch(path + "/" + id + "?t=m&id=" + id,{
+    fetch(path + "/" + id + "/?t=m&id=" + id,{
       headers: {Authorization: auth.authTokens.head},})
     .then(response => response.json())
     .then(data => {
@@ -69,7 +69,6 @@ function WritingPage() {
       headers: { Authorization: auth.authTokens.head}
     }).then(setShouldRedirect(meta.id));
     
-    <Redirect to= {"/writer/" + shouldRedirect}/>
   }
   const makePrivate = () => {
     fetch(window.location.pathname + "/makeprivate", {method: 'POST',
@@ -85,11 +84,10 @@ function WritingPage() {
             initialValue="<p>Write your story here!</p>"
             init={{
               plugins: [
-                'link, paste, anchor, save',
+                'link, paste, save, code',
               ],
               save_onsavecallback: handleSubmit,
-              toolbar: 'save | undo redo | styleselect | bold italic | alignleft'
-              + 'aligncenter alignright alignjustify | outdent indent | anchor',
+              toolbar: 'save | undo redo | styleselect | code | bold italic | alignleft aligncenter alignright alignjustify | outdent indent',
               skin_url: '/skins',
               height: window.innerHeight - 200,
               skin: 'snow',
