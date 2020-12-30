@@ -5,11 +5,13 @@ using namespace mysqlx;
 Session* sesh;
 Schema* db;
 DBInterface::DBInterface(const std::string& host, uint32_t port, const std::string& user, const std::string& pass, const std::string& dbName) {
-	cout << "Creating session on " << host << ":" << port <<" for " << user << "..." << endl;
 	try {
+		cout << "Creating session for " << user << '@' << host << ':' << port << endl;
 		sesh = new Session(host, port, user, pass, dbName);
-		db = new Schema(sesh->getDefaultSchema()); 
-							
+		cout << "b2" << endl;
+		db = new Schema(sesh->getDefaultSchema());
+		cout << "b3" << endl;
+
 	}
 	catch (const mysqlx::Error& err)
 	{
@@ -156,7 +158,7 @@ uint32_t DBInterface::addStory(Story story) {
 			table.update().set("path", story.path).where("id = " + std::to_string(story.id)).execute();
 			semaphore.notify(); //need to keep the db locked for a while for this to work
 			return story.id;
-			
+
 		}
 		else {
 			semaphore.wait();
@@ -190,7 +192,7 @@ void DBInterface::updateRating(uint32_t storyID) {
 	sesh->sql("UPDATE test1 "
 		"INNER JOIN(SELECT "
 			"test1.id, AVG(ratings.rating) * 1000 AS rating_average "
-		//ratings are stored as uint8 0-50, average ratings are stored as uint16 0-50,000. 
+		//ratings are stored as uint8 0-50, average ratings are stored as uint16 0-50,000.
 		"FROM test1 "
 		"INNER JOIN "
 		"ratings "
@@ -204,14 +206,14 @@ void DBInterface::updateRating(uint32_t storyID) {
 
 }
 void DBInterface::updateRatings() {
-	
+
 	semaphore.wait();
 	try{
-	sesh->sql( 
+	sesh->sql(
 		"UPDATE test1 "
 		"INNER JOIN(SELECT "
 			"test1.id, AVG(ratings.rating) * 1000 AS rating_average "
-			//ratings are stored as uint8 0-50, average ratings are stored as uint16 0-50,000. 
+			//ratings are stored as uint8 0-50, average ratings are stored as uint16 0-50,000.
 			"FROM test1 "
 			"INNER JOIN "
 			"ratings "
@@ -219,7 +221,7 @@ void DBInterface::updateRatings() {
 			"group by test1.id) "
 		"as b on test1.id = b.id "
 		"SET "
-		"test1.rating = b.rating_average;").execute(); 
+		"test1.rating = b.rating_average;").execute();
 	}
 	catch (const mysqlx::Error& err) {
 		cout << "ERROR: " << err << endl;
@@ -301,6 +303,10 @@ int DBInterface::addView(uint32_t storyID, uint32_t userIP) {
 	return 200;
 }
 
+void DBInterface::RemoveSortedDuplicates() {
+
+}
+
 void DBInterface::sortList(unsigned int column) {
 	std::string keyString;
 	std::string tableString;
@@ -312,7 +318,7 @@ void DBInterface::sortList(unsigned int column) {
 		keyString = "rating";
 		tableString = "toprated";
 	}
-	else if (column == 4) { 
+	else if (column == 4) {
 		keyString = "views";
 		tableString = "mostviewed";
 	}
@@ -359,12 +365,12 @@ void DBInterface::sortList(unsigned int column) {
 
 	//and tag all the ones that I just got
 	semaphore.wait();
-	
-	res = sesh->sql("UPDATE test1 " 
+
+	res = sesh->sql("UPDATE test1 "
 		"INNER JOIN " + tableString + " ON " + tableString + ".id = test1.id "
 		"SET hit = 1;"
 	).execute();
-	
+
 	semaphore.notify();
 
 	//timer.Stop();
@@ -381,7 +387,7 @@ void DBInterface::sortList(unsigned int column) {
 
 	//timer.Stop();
 	//cout << "pulling unhits took " << timer.Results() << " miliseconds" << endl;
-	
+
 	sortList.resize(sortList.size() + remainers.count()); //adjust size to take the remainers into account
 
 	while (remainers.count()) { //add the remainers to the sortList
@@ -424,7 +430,7 @@ void DBInterface::sortList(unsigned int column) {
 		cout << "EXCEPTION: " << ex << endl;
 		throw;
 	}
-	
+
 	//timer.Stop();
 	//cout << "reseting hits took " << timer.Results() << " miliseconds" << endl;
 }
@@ -441,12 +447,12 @@ void DBInterface::sortNewest() {
 	sortList(2);
 }
 
-vector<Story> DBInterface::pullList(std::string tableName, std::string where, uint32_t offset, uint32_t limit, uint32_t permission) { 
+vector<Story> DBInterface::pullList(std::string tableName, std::string where, uint32_t offset, uint32_t limit, uint32_t permission) {
 	RowResult res;
 	semaphore.wait();
 	try{
 		res = sesh->sql(
-			"SELECT test1.*, users.username FROM " + tableName + 
+			"SELECT test1.*, users.username FROM " + tableName +
 			" INNER JOIN test1 ON " + tableName + ".id = test1.id"
 			" INNER JOIN users ON users.id = test1.author_id"
 			" WHERE permission <= " + std::to_string(permission) + where +
@@ -469,10 +475,12 @@ vector<Story> DBInterface::pullList(std::string tableName, std::string where, ui
 	}
 	semaphore.notify();
 	auto rSize = res.count(); //changes with fetchOne, so lets make a static copy
+
 	vector<Story> ret(rSize);
 	for (uint i = 0; i < rSize; i++) {//for each result
 		Row row = res.fetchOne();
-		Story story = { row.get(0), (std::string)row.get(1), (std::string)row.get(2), row.get(3), row.get(4), row.get(6), (unsigned int)row.get(7), row.get(8), (std::string)row.get(9) };//add result to return vector
+		const  unsigned char fuckLLVM = (unsigned int)row.get(7); //will not accept narrowing in initialization of the Story object. So need to narrow here
+		Story story = { row.get(0), (std::string)row.get(1), (std::string)row.get(2), row.get(3), row.get(4), row.get(6), fuckLLVM, row.get(8), (std::string)row.get(9) };//add result to return vector
 		ret[i] = story;
 	}
 
@@ -481,7 +489,7 @@ vector<Story> DBInterface::pullList(std::string tableName, std::string where, ui
 
 vector<Story> DBInterface::pullMostViewed(std::string where, uint32_t offset, uint32_t limit) {
 	return pullList("mostviewed", where, offset, limit);
-} 
+}
 
 vector<Story> DBInterface::pullTopRated(std::string where, uint32_t offset, uint32_t limit) {
 	return pullList("toprated", where, offset, limit);
@@ -530,7 +538,7 @@ Story DBInterface::pullStoryInfo(const uint32_t& id) {
 }
 
 vector<Story> DBInterface::pullUserStories(uint32_t id, uint32_t offset, uint32_t limit, uint32_t permission){
-	
+
 	return pullList("mostviewed", " AND author_id = " + std::to_string(id), offset, limit, permission);
 }
 

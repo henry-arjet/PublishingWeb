@@ -36,7 +36,7 @@ function NavBar() {
   return (
     <header fluid>
       <Navbar bg="light"> 
-        <LinkContainer to="/"><Navbar.Brand><strong>Publishing Website</strong></Navbar.Brand></LinkContainer>
+        <LinkContainer to="/"><Navbar.Brand><strong>Liber Fabulas</strong></Navbar.Brand></LinkContainer>
         <Navbar.Collapse>
           <Nav className="headerNav">
           <LinkContainer to="/toprated"><Nav.Link className="headerNavButton">

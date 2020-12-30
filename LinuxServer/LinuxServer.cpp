@@ -25,7 +25,7 @@ using namespace web::json;
 
 using CryptoPP::byte;
 
-//contentMap relates file extentions to mime types 
+//contentMap relates file extentions to mime types
 std::unordered_map<utility::string_t, utility::string_t> contentMap;
 
 typedef std::map<utility::string_t, utility::string_t> QueryMap;
@@ -62,7 +62,10 @@ void createContentMap() {
     contentMap[U(".html")] = U("text/html");
     contentMap[U(".js")] = U("application/javascript");
     contentMap[U(".css")] = U("text/css");
-    contentMap[U(".png")] == U("image/png");
+    contentMap[U(".png")] = U("image/png");
+    contentMap[U(".jpg")] = U("image/jpeg");
+    contentMap[U(".jpeg")] = U("image/jpeg");
+    contentMap[U(".txt")] = U("text/plain");
 }
 
 void handle_error(pplx::task<void>& t) {
@@ -78,7 +81,7 @@ struct queryItem {
 };
 
 value storyToJSON(const Story& story) {
-    value obj = value::object();
+    value obj = value::object(true);
     obj["id"] = value::number(story.id);
     obj["title"] = value::string(story.title);
     obj["path"] = value::string(story.path);
@@ -591,7 +594,7 @@ void updateStory(http_request const& req) {
 }
 
 void handleLogin(http_request const& req) {
-    //get who we're attempting to log in    
+    //get who we're attempting to log in
     UserClear userClear = JSONToUserClear(req.extract_json().get());
     userClear.id = dbp->findUser(userClear.username);
 
@@ -806,14 +809,52 @@ void autoSort(uint64_t miliseconds) {
 }
 
 int main() {
-    
-    //dbp = new DBInterface("54.242.214.211", 33060, "app", "xH8#N7GmtILb", "website"); //internet address
-    dbp = new DBInterface("172.26.5.20", 33060, "app", "xH8#N7GmtILb", "website"); //local address
-    
-    const std::string base_url = "http://0.0.0.0:80/";
-    web::http::experimental::listener::http_listener listener(base_url);
+#ifdef DEBUG
+    dbp = new DBInterface("192.168.0.12", 33060, "app", "xH8#N7GmtILb", "website"); //dev address
+
+    //dbp = new DBInterface("54.242.214.211", 33060, "app", "xH8#N7GmtILb", "website"); //server address
+    const std::string base_url = "http://127.0.0.1:8080/";
+#else
+    dbp = new DBInterface("172.26.5.20", 33060, "app", "xH8#N7GmtILb", "website"); //server-local address
+    const std::string base_url = "http://3.225.135.220:80/";
+#endif
+
+
+    cout << "storting..." << endl;
+    dbp->updateRatings();
+    dbp->updateViews();
+    dbp->sortNewest();
+    dbp->sortMostViewed();
+    dbp->sortTopRated();
+    cout << "storting finished" << endl;
 
     createContentMap();
+
+    web::http::experimental::listener::http_listener_config conf;
+    conf.set_ssl_context_callback([](boost::asio::ssl::context& ctx){
+        try {
+            cout << "callback hit" << endl;
+            ctx.set_options(boost::asio::ssl::context::default_workarounds);
+
+            boost::system::error_code e;
+            ctx.use_certificate_file("cert.pem", boost::asio::ssl::context::pem);
+            ctx.use_private_key_file("key.pem", boost::asio::ssl::context::pem);
+            ctx.use_certificate_chain_file("chain.pem");
+        }
+        catch (std::exception& ex) {
+            cout << "STD EXCEPTION: " << ex.what() << endl;
+            throw;
+        }
+        catch (const char* ex) {
+            cout << "EXCEPTION: " << ex << endl;
+            throw;
+        }
+    });
+
+
+
+    web::http::experimental::listener::http_listener listener(base_url, conf);
+
 
     listener.support(web::http::methods::GET, handleGet);
 

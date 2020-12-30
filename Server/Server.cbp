@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="Server" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug x64">
+				<Option output="/Debug/Server" prefix_auto="1" extension_auto="1" />
+				<Option object_output="Debug/" />
+				<Option deps_output="/Debug/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-D_DEBUG" />
+					<Add option="-D_CONSOLE" />
+					<Add option="-Wall" />
+					<Add directory="C:/Users/Henry/Documents/Common-Code/" />
+					<Add directory="$(IncludePath)/" />
+					<Add directory="C:/Program Files/MySQL/MySQL Connector C++ 8.0/include/" />
+					<Add directory="C:/Users/Henry/Documents/PublishingWeb/packages/cpprestsdk.v142.2.10.15/build/native/include/" />
+					<Add directory="C:/Program Files/MySQL/Connector C++ 8.0/include/" />
+					<Add directory="C:/Users/Henry/Documents/PublishingWeb/Server/include/" />
+				</Compiler>
+				<Linker>
+					<Add library="vs14/mysqlcppconn8.lib" />
+					<Add library="vs14/libcrypto.lib" />
+					<Add library="vs14/libssl.lib" />
+					<Add library="cryptlib.lib" />
+					<Add library="tidys.lib" />
+					<Add library="winmm.lib" />
+					<Add library="comctl32.lib" />
+					<Add library="kernel32.lib" />
+					<Add library="user32.lib" />
+					<Add library="gdi32.lib" />
+					<Add library="winspool.lib" />
+					<Add library="comdlg32.lib" />
+					<Add library="advapi32.lib" />
+					<Add library="shell32.lib" />
+					<Add library="ole32.lib" />
+					<Add library="oleaut32.lib" />
+					<Add library="uuid.lib" />
+					<Add library="odbc32.lib" />
+					<Add library="odbccp32.lib" />
+					<Add directory="C:/Users/Henry/Documents/Common-Code/64-release/" />
+					<Add directory="$(LibraryPath)/" />
+					<Add directory="C:/Program Files/MySQL/Connector C++ 8.0/lib64/" />
+				</Linker>
+			</Target>
+			<Target title="Linux x64">
+				<Option output="/Linux/Server" prefix_auto="1" extension_auto="1" />
+				<Option object_output="Linux/" />
+				<Option deps_output="/Linux/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-DNDEBUG" />
+					<Add option="-D_CONSOLE" />
+					<Add option="-Wall" />
+					<Add directory="C:/Users/Henry/Documents/Common-Code/" />
+					<Add directory="$(IncludePath)/" />
+					<Add directory="C:/Program Files/MySQL/MySQL Connector C++ 8.0/include/" />
+					<Add directory="C:/Users/Henry/Documents/PublishingWeb/packages/cpprestsdk.v142.2.10.15/build/native/include/" />
+					<Add directory="C:/Program Files/MySQL/Connector C++ 8.0/include/" />
+					<Add directory="C:/Users/Henry/Documents/PublishingWeb/Server/include/" />
+				</Compiler>
+				<Linker>
+					<Add library="cryptlib.lib" />
+					<Add library="vs14/mysqlcppconn8.lib" />
+					<Add library="winmm.lib" />
+					<Add library="comctl32.lib" />
+					<Add library="kernel32.lib" />
+					<Add library="user32.lib" />
+					<Add library="gdi32.lib" />
+					<Add library="winspool.lib" />
+					<Add library="comdlg32.lib" />
+					<Add library="advapi32.lib" />
+					<Add library="shell32.lib" />
+					<Add library="ole32.lib" />
+					<Add library="oleaut32.lib" />
+					<Add library="uuid.lib" />
+					<Add library="odbc32.lib" />
+					<Add library="odbccp32.lib" />
+					<Add directory="C:/Users/Henry/Documents/Common-Code/64-release/" />
+					<Add directory="$(LibraryPath)/" />
+					<Add directory="C:/Program Files/MySQL/Connector C++ 8.0/lib64/" />
+				</Linker>
+			</Target>
+			<Target title="Release x64">
+				<Option output="/Release/Server" prefix_auto="1" extension_auto="1" />
+				<Option object_output="Release/" />
+				<Option deps_output="/Release/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-DNDEBUG" />
+					<Add option="-D_CONSOLE" />
+					<Add option="-Wall" />
+					<Add directory="C:/Users/Henry/Documents/Common-Code/" />
+					<Add directory="$(IncludePath)/" />
+					<Add directory="C:/Program Files/MySQL/MySQL Connector C++ 8.0/include/" />
+					<Add directory="C:/Users/Henry/Documents/PublishingWeb/packages/cpprestsdk.v142.2.10.15/build/native/include/" />
+					<Add directory="C:/Program Files/MySQL/Connector C++ 8.0/include/" />
+					<Add directory="C:/Users/Henry/Documents/PublishingWeb/Server/include/" />
+				</Compiler>
+				<Linker>
+					<Add library="cryptlib.lib" />
+					<Add library="vs14/mysqlcppconn8.lib" />
+					<Add library="winmm.lib" />
+					<Add library="comctl32.lib" />
+					<Add library="kernel32.lib" />
+					<Add library="user32.lib" />
+					<Add library="gdi32.lib" />
+					<Add library="winspool.lib" />
+					<Add library="comdlg32.lib" />
+					<Add library="advapi32.lib" />
+					<Add library="shell32.lib" />
+					<Add library="ole32.lib" />
+					<Add library="oleaut32.lib" />
+					<Add library="uuid.lib" />
+					<Add library="odbc32.lib" />
+					<Add library="odbccp32.lib" />
+					<Add directory="C:/Users/Henry/Documents/Common-Code/64-release/" />
+					<Add directory="$(LibraryPath)/" />
+					<Add directory="C:/Program Files/MySQL/Connector C++ 8.0/lib64/" />
+				</Linker>
+			</Target>
+		</Build>
+		<Unit filename="Server.cpp" />
+		<Unit filename="include/arjet/DBInterface.h" />
+		<Unit filename="include/arjet/Sanitizer.h" />
+		<Unit filename="include/arjet/Timer.h" />
+		<Unit filename="packages.config" />
+		<Unit filename="source/DBInterface.cpp" />
+		<Extensions />
+	</Project>
+</CodeBlocks_project_file>

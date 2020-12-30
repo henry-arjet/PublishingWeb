@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="LinuxServer" />
+		<Option platforms="Unix;" />
+		<Option pch_mode="2" />
+		<Option compiler="clang" />
+		<Build>
+			<Target title="Debug x64">
+				<Option platforms="Unix;" />
+				<Option output="../LinuxServerBuild/LinuxServerDebug" prefix_auto="1" extension_auto="1" />
+				<Option object_output="Debug/" />
+				<Option deps_output="/LinuxServerBuild/" />
+				<Option type="1" />
+				<Option compiler="clang" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-DDEBUG" />
+					<Add directory="/server/include/" />
+					<Add directory="C:/Users/Henry/Documents/Common-Code/" />
+					<Add directory="$(IncludePath)/" />
+				</Compiler>
+				<Linker>
+					<Add directory="C:/Users/Henry/Documents/Common-Code/64-release/" />
+					<Add directory="$(IncludePath)/" />
+				</Linker>
+				<Environment>
+					<Variable name="DEBUG" value="1" />
+				</Environment>
+			</Target>
+			<Target title="Release x64">
+				<Option platforms="Unix;" />
+				<Option output="../LinuxServerBuild/LinuxServer" prefix_auto="1" extension_auto="1" />
+				<Option object_output="Release/" />
+				<Option deps_output="/LinuxServerBuild/" />
+				<Option type="1" />
+				<Option compiler="clang" />
+				<Option use_console_runner="0" />
+				<Compiler>
+					<Add directory="/server/include/" />
+					<Add directory="C:/Users/Henry/Documents/Common-Code/" />
+					<Add directory="$(IncludePath)/" />
+				</Compiler>
+				<Linker>
+					<Add directory="C:/Users/Henry/Documents/Common-Code/64-release/" />
+					<Add directory="$(IncludePath)/" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-std=c++20" />
+			<Add directory="../Server/include" />
+			<Add directory="../../Common-Code" />
+			<Add directory="/usr/lib/x86_64-linux-gnu" />
+		</Compiler>
+		<Linker>
+			<Add library="../../Common-Code/64-release/libcommon_utilities.so" />
+			<Add library="../../Common-Code/64-release/libcpprest.so" />
+			<Add library="../../Common-Code/64-release/libcryptopp.a" />
+			<Add library="../../Common-Code/64-release/libhttpclient_test.so" />
+			<Add library="../../Common-Code/64-release/libhttplistener_test.so" />
+			<Add library="../../Common-Code/64-release/libhttptest_utilities.so" />
+			<Add library="../../Common-Code/64-release/libjson_test.so" />
+			<Add library="../../Common-Code/64-release/libpplx_test.so" />
+			<Add library="../../Common-Code/64-release/libstreams_test.so" />
+			<Add library="../../Common-Code/64-release/libunittestpp.so" />
+			<Add library="../../Common-Code/64-release/liburi_test.so" />
+			<Add library="../../Common-Code/64-release/libutils_test.so" />
+			<Add library="../../Common-Code/64-release/libwebsocketsclient_test.so" />
+			<Add library="../../Common-Code/64-release/libwebsockettest_utilities.so" />
+			<Add library="/usr/lib/x86_64-linux-gnu/libssl.so" />
+			<Add library="/usr/local/lib/libcrypto.so" />
+			<Add library="/usr/lib/x86_64-linux-gnu/libpthread.so" />
+			<Add library="../../Common-Code/64-release/libmysqlcppconn8.a" />
+			<Add library="resolv" />
+			<Add directory="../../Common-Code/64-release" />
+			<Add directory="/usr/lib/x86_64-linux-gnu" />
+		</Linker>
+		<Unit filename="../Server/source/DBInterface.cpp" />
+		<Unit filename="LinuxServer.cpp" />
+		<Unit filename="packages.config">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Extensions />
+	</Project>
+</CodeBlocks_project_file>

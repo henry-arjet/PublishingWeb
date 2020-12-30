@@ -78,8 +78,9 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)\LinuxServerBuild</OutDir>
-    <IncludePath>C:\Users\Henry\Documents\Common-Code;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\server\include;C:\Users\Henry\Documents\Common-Code;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\Henry\Documents\Common-Code\64-release;$(IncludePath)</LibraryPath>
+    <TargetName>LinuxServerDebug</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)\LinuxServerBuild</OutDir>
@@ -105,9 +106,12 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
-      <LibraryDependencies>
-      </LibraryDependencies>
+      <LibraryDependencies>common_utilities;cpprest;crypto;ssl;pthread;cryptopp;mysqlcppconn8;%(LibraryDependencies)</LibraryDependencies>
     </Link>
+    <ClCompile>
+      <CppLanguageStandard>c++17</CppLanguageStandard>
+      <PreprocessorDefinitions>DEBUG</PreprocessorDefinitions>
+    </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -58,16 +58,19 @@ function WritingPage() {
   function testRedirect(){
     if (shouldRedirect != 0){
         return(
-            <Redirect to= {"/story/" + shouldRedirect}/>
+            <Redirect to= {"/users/" + auth.authTokens.id}/>
         );
     }
   }
 
   const publish = () => {
-    handleSubmit();
-    fetch(window.location.pathname + "/publish", {method: 'POST',
-      headers: { Authorization: auth.authTokens.head}
-    }).then(setShouldRedirect(meta.id));
+    fetch(window.location.pathname, {method: 'PUT',
+      headers: { Authorization: auth.authTokens.head,
+      'Content-Type': 'text/html',},
+      body: tinyMCE.activeEditor.getContent(),
+    }).then(fetch(window.location.pathname + "/publish", {method: 'POST',
+    headers: { Authorization: auth.authTokens.head}})
+    ).then(setShouldRedirect(meta.id));
     
   }
   const makePrivate = () => {

@@ -80,6 +80,8 @@ public:
 	void sortNewest();
 	vector<Story> pullNewest(std::string where = "", uint32_t offset = 0, uint32_t limit = uint32_t(20));
 
+	void RemoveSortedDuplicates();//Removes duplicate items from the sorted lists. IDK why, but this sometimes happens.
+
 	vector<Story> pullUserStories(uint32_t id, uint32_t offset = 0, uint32_t limit = uint32_t(20), uint32_t permission = 1); //Pulls results from the database matching user ID
 	~DBInterface();
 private:
