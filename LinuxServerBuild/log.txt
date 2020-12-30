@@ -1,0 +1,140 @@
+Creating session for app@192.168.0.12:33060
+b2
+b3
+Done
+storting...
+storting finished
+Listining for requests at: http://127.0.0.1:8080/
+GET called at /
+GET called at /styles.css
+GET called at /main.bundle.js
+GET called at /favicon.ico
+GET called at /users/1/stories/?p=1&a=self
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /story/21/?t=m&id=21
+GET called at /images/star_left_empty.png
+GET called at /images/star_right_empty.png
+GET called at /images/star_left_full.png
+GET called at /images/star_right_full.png
+GET called at /
+GET called at /images/star_right_empty.png
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /skins/skin.min.css
+GET called at /skins/content.min.css
+GET called at /skins/content/default/content.css
+GET called at /story/21/?t=m&id=21
+GET called at /story/21/?t=t&id=21
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+../stories/21.html
+Cleaning 21.html
+GET called at /writer/21
+GET called at /styles.css
+GET called at /main.bundle.js
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /story/21/?t=m&id=21
+GET called at /favicon.ico
+GET called at /skins/skin.min.css
+GET called at /skins/content.min.css
+GET called at /skins/content/default/content.css
+GET called at /story/21/?t=t&id=21
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+../stories/21.html
+Cleaning 21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+Cleaning 21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+Cleaning 21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /writer/21
+GET called at /styles.css
+GET called at /main.bundle.js
+GET called at GET called at /story/21/?t=m&id=21/story/21/?t=t&id=21
+
+../stories/21.html
+GET called at /favicon.ico
+GET called at /skins/skin.min.css
+GET called at /skins/content.min.css
+GET called at /skins/content/default/content.css
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+Cleaning 21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /writer/21
+GET called at /styles.css
+GET called at /main.bundle.js
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /story/21/?t=m&id=21
+GET called at /favicon.ico
+GET called at /skins/skin.min.css
+GET called at /skins/content.min.css
+GET called at /skins/content/default/content.css
+GET called at GET called at /story/21/?t=t&id=21/story/21/?t=t&id=21
+
+../stories/21.html
+../stories/21.html
+Cleaning 21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /writer/21
+GET called at /styles.css
+GET called at /main.bundle.js
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /skins/skin.min.css
+GET called at /story/21/?t=m&id=21
+GET called at /favicon.ico
+GET called at /skins/content.min.css
+GET called at /skins/content/default/content.css
+GET called at GET called at /story/21/?t=t&id=21/story/21/?t=t&id=21
+
+../stories/21.html
+../stories/21.html
+Cleaning 21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /writer/21
+GET called at /styles.css
+GET called at /main.bundle.js
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /story/21/?t=m&id=21
+GET called at /favicon.ico
+GET called at /skins/skin.min.css
+GET called at /skins/content.min.css
+GET called at /skins/content/default/content.css
+GET called at /story/21/?t=t&id=21
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+../stories/21.html
+Cleaning 21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+Cleaning 21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html
+GET called at /story/21/?t=t&id=21
+../stories/21.html

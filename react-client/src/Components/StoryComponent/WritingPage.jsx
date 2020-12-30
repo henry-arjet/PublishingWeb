@@ -1,6 +1,6 @@
 import React, {useContext, useState, useEffect} from "react";
 import { AuthContext } from "../Context/Auth";
-import { Container, Button} from "react-bootstrap";
+import { Container, Button, Alert} from "react-bootstrap";
 import { Redirect } from "react-router";
 
 import { Editor } from '@tinymce/tinymce-react';
@@ -19,10 +19,11 @@ function WritingPage() {
   let auth = useContext(AuthContext);
   let [meta, setMeta] = useState(null);
   let [isPublic, setIsPublic] = useState(false);
+  let [showSaved, setShowSaved] = useState(false);
+
   const [shouldRedirect, setShouldRedirect] = useState(0);
 
   function load(){
-    console.log("loading");
     let id = window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1);
     let path1 = window.location.pathname.substring(0,window.location.pathname.lastIndexOf("/")) //There is most likely a better way to do this
     let path = window.location.origin + "/" + path1.substring(0,path1.lastIndexOf("/")) + "story";
@@ -51,7 +52,14 @@ function WritingPage() {
       headers: { Authorization: auth.authTokens.head,
       'Content-Type': 'text/html',},
       body: tinyMCE.activeEditor.getContent(),
-    })//Really need to add feedback to show that they saved
+      }).then(response =>{
+        if (response.status == 201){
+          console.log("work saved");
+          setShowSaved(true);
+          setTimeout(() => setShowSaved(false), 3500);
+        }
+        else{console.log('could not save');}
+      });
     }
   };
 
@@ -79,10 +87,26 @@ function WritingPage() {
     });
   }
   
+  function savedAlert() {
+  
+    if (showSaved) {
+      return (
+        <div>
+          <br/>
+          <Alert variant="success" onClose={() => setShowSaved(false)} dismissible>
+            <Alert.Heading>Work has been saved!</Alert.Heading>
+          </Alert>
+        </div>
+        
+      );
+    }
+  }
+
   return(
     <Container className="page">
       {testRedirect()}
       <Container className="storyEditor" >
+      {savedAlert()}
           <Editor 
             initialValue="<p>Write your story here!</p>"
             init={{
@@ -108,5 +132,7 @@ function WritingPage() {
     </Container>
   );
 }
+
+
 
 export default WritingPage;
