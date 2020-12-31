@@ -19,7 +19,8 @@ function WritingPage() {
   let auth = useContext(AuthContext);
   let [meta, setMeta] = useState(null);
   let [isPublic, setIsPublic] = useState(false);
-  let [showSaved, setShowSaved] = useState(false);
+  let [showSaved, setShowSaved] = useState(false); //controls the "saved" alert
+  let [showPrivate, setShowPrivate] = useState(false); //controls the alert that pops when the story is set to private
 
   const [shouldRedirect, setShouldRedirect] = useState(0);
 
@@ -84,6 +85,12 @@ function WritingPage() {
   const makePrivate = () => {
     fetch(window.location.pathname + "/makeprivate", {method: 'POST',
       headers: { Authorization: auth.authTokens.head}
+    }).then(response => {
+      if (response.status == 200){
+        setIsPublic(false);
+        setShowPrivate(true);
+        setTimeout(() => setShowPrivate(false), 4000);
+      }
     });
   }
   
@@ -101,12 +108,27 @@ function WritingPage() {
       );
     }
   }
+  function privateAlert() {
+  
+    if (showPrivate) {
+      return (
+        <div>
+          <br/>
+          <Alert variant="success" onClose={() => setShowPrivate(false)} dismissible>
+            <Alert.Heading>Your story is now visible only to you</Alert.Heading>
+          </Alert>
+        </div>
+        
+      );
+    }
+  }
 
   return(
     <Container className="page">
       {testRedirect()}
       <Container className="storyEditor" >
       {savedAlert()}
+      {privateAlert()}
           <Editor 
             initialValue="<p>Write your story here!</p>"
             init={{
