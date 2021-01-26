@@ -815,8 +815,6 @@ int main(int argc, char* argv[]) {
         localIP = argv[1];
     }
 
-
-
 #ifdef DEBUG
     dbp = new DBInterface(localIP, 33060, "app", "xH8#N7GmtILb", "website"); //dev address
 
