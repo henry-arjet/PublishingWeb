@@ -55,7 +55,6 @@ function WritingPage() {
       body: tinyMCE.activeEditor.getContent(),
       }).then(response =>{
         if (response.status == 201){
-          console.log("work saved");
           setShowSaved(true);
           setTimeout(() => setShowSaved(false), 3500);
         }
@@ -64,23 +63,22 @@ function WritingPage() {
     }
   };
 
-  function testRedirect(){
-    if (shouldRedirect != 0){
-        return(
-            <Redirect to= {"/users/" + auth.authTokens.id}/>
-        );
-    }
-  }
-
-  const publish = () => {
+  const publish = () => { //when the publish button is pressed
     fetch(window.location.pathname, {method: 'PUT',
       headers: { Authorization: auth.authTokens.head,
       'Content-Type': 'text/html',},
       body: tinyMCE.activeEditor.getContent(),
     }).then(fetch(window.location.pathname + "/publish", {method: 'POST',
     headers: { Authorization: auth.authTokens.head}})
-    ).then(setShouldRedirect(meta.id));
-    
+    ).then(setShouldRedirect(meta.id)); //redirect to the story page for this story
+  }
+
+  function testRedirect(){
+    if (shouldRedirect != 0){
+        return(
+            <Redirect to= {"/story/" + shouldRedirect}/>
+        );
+    }
   }
   const makePrivate = () => {
     fetch(window.location.pathname + "/makeprivate", {method: 'POST',

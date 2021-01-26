@@ -808,9 +808,17 @@ void autoSort(uint64_t miliseconds) {
 
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    string localIP = "192.168.0.12";
+
+    if (argc > 1){ //allows setting local ip through command line
+        localIP = argv[1];
+    }
+
+
+
 #ifdef DEBUG
-    dbp = new DBInterface("192.168.0.12", 33060, "app", "xH8#N7GmtILb", "website"); //dev address
+    dbp = new DBInterface(localIP, 33060, "app", "xH8#N7GmtILb", "website"); //dev address
 
     //dbp = new DBInterface("54.242.214.211", 33060, "app", "xH8#N7GmtILb", "website"); //server address
     const std::string base_url = "http://127.0.0.1:8080/";
@@ -820,13 +828,7 @@ int main() {
 #endif
 
 
-    cout << "storting..." << endl;
-    dbp->updateRatings();
-    dbp->updateViews();
-    dbp->sortNewest();
-    dbp->sortMostViewed();
-    dbp->sortTopRated();
-    cout << "storting finished" << endl;
+    system("pwd");
 
     createContentMap();
 
