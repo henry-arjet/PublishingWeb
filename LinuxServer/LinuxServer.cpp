@@ -13,6 +13,7 @@
 #include <cpprest/json.h>
 
 #include <arjet/DBInterface.h>
+#include <arjet/WordCounter.h>
 
 using std::cout;
 using std::endl;
@@ -809,6 +810,8 @@ void autoSort(uint64_t miliseconds) {
 }
 
 int main(int argc, char* argv[]) {
+    cout << "lets test the counting!" << endl;
+
     string localIP = "192.168.0.12";
 
     if (argc > 1){ //allows setting local ip through command line
@@ -825,8 +828,6 @@ int main(int argc, char* argv[]) {
     const std::string base_url = "http://3.225.135.220:80/";
 #endif
 
-
-    system("pwd");
 
     createContentMap();
 

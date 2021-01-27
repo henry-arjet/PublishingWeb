@@ -8,9 +8,7 @@ DBInterface::DBInterface(const std::string& host, uint32_t port, const std::stri
 	try {
 		cout << "Creating session for " << user << '@' << host << ':' << port << endl;
 		sesh = new Session(host, port, user, pass, dbName);
-		cout << "b2" << endl;
 		db = new Schema(sesh->getDefaultSchema());
-		cout << "b3" << endl;
 
 	}
 	catch (const mysqlx::Error& err)

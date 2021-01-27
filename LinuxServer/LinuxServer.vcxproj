@@ -90,9 +90,13 @@
   <ItemGroup>
     <ClCompile Include="..\Server\source\DBInterface.cpp" />
     <ClCompile Include="LinuxServer.cpp" />
+    <ClCompile Include="WordCounter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Server\include\arjet\WordCounter.h" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Link>
