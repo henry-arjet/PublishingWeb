@@ -117,6 +117,7 @@ bool DBInterface::updateStory(Story story){
 		semaphore.wait();
 		table.update().set("title", story.title).set("path", story.path).set("rating", story.rating)
 			.set("views", story.views).set("author_id", story.authorID).set("permission", story.permission)
+			.set("categories", story.categories).set("wordcount", story.wordcount)
 			.where(s).execute(); //reset the hit detector
 		semaphore.notify();
 		return true;
@@ -141,6 +142,23 @@ bool DBInterface::updateStory(Story story){
 		return false;
 	}
 }
+bool DBInterface::updateStoryWordCount(uint id, uint count) {
+	Table table = db->getTable("test1");
+	try {
+		std::string s = "id = " + std::to_string(id);
+		semaphore.wait();
+		table.update().set("wordcount", count).where(s).execute();
+		semaphore.notify();
+		return true;
+	}
+
+	catch (const mysqlx::Error& err)
+	{
+		semaphore.notify();
+		cout << "ERROR: " << err << endl;
+		return false;
+	}
+}
 
 uint32_t DBInterface::addStory(Story story) {
 	Table table = db->getTable("test1");
@@ -150,7 +168,7 @@ uint32_t DBInterface::addStory(Story story) {
 			story.permission = 2;
 			story.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 			semaphore.wait();
-			table.insert().values(Value(), story.title, story.path, 0, story.views, 0, story.authorID, story.permission, story.timestamp).execute();
+			table.insert().values(Value(), story.title, story.path, 0, story.views, 0, story.authorID, story.permission, story.timestamp, 0, 0).execute();
 			story.id = table.select("LAST_INSERT_ID()").execute().fetchOne().get(0);
 			story.path = "stories/" + std::to_string(story.id) + ".html";
 			table.update().set("path", story.path).where("id = " + std::to_string(story.id)).execute();
@@ -160,7 +178,8 @@ uint32_t DBInterface::addStory(Story story) {
 		}
 		else {
 			semaphore.wait();
-			table.insert().values(Value(), story.title, story.path, story.rating, story.views, 0, story.authorID, story.permission, story.timestamp).execute();
+			table.insert().values(Value(), story.title, story.path, story.rating, story.views, 0,
+				story.authorID, story.permission, story.timestamp, story.categories, story.wordcount).execute();
 			RowResult res = table.select("LAST_INSERT_ID()").execute();
 			semaphore.notify();
 			return res.fetchOne().get(0);
@@ -183,7 +202,6 @@ uint32_t DBInterface::addStory(Story story) {
 		return false;
 	}
 }
-
 
 void DBInterface::updateRating(uint32_t storyID) {
 	semaphore.wait();
@@ -273,10 +291,31 @@ int DBInterface::addRating(uint32_t storyID, uint32_t userID, int8_t rating) {
 	RowResult res = table.select("id").where("user_id = " + std::to_string(userID) + " AND story_id = " + std::to_string(storyID)).execute();
 	semaphore.notify();
 
-	if (res.count()) {
-		//updateRating(storyID);
-		return 409;
-	}
+	if (res.count()) { //if a rating already exists
+		uint32_t ratingID = res.fetchOne().get(0);
+		semaphore.wait();
+		try {
+			string str = "id = " + std::to_string(ratingID);
+			table.update().set("rating", rating).where(str).execute();
+			semaphore.notify();
+		}
+		catch (const mysqlx::Error& err) {
+			cout << "ERROR: " << err << endl;
+			semaphore.notify();
+			throw;
+		}
+		catch (std::exception& ex) {
+			cout << "STD EXCEPTION: " << ex.what() << endl;
+			semaphore.notify();
+			throw;
+		}
+		catch (const char* ex) {
+			cout << "EXCEPTION: " << ex << endl;
+			semaphore.notify();
+			throw;
+		}
+		return 200;
+	}//else
 
 	semaphore.wait();
 	table.insert().values(Value(), storyID, userID, rating).execute();
@@ -476,10 +515,18 @@ vector<Story> DBInterface::pullList(std::string tableName, std::string where, ui
 
 	vector<Story> ret(rSize);
 	for (uint i = 0; i < rSize; i++) {//for each result
-		Row row = res.fetchOne();
-		const  unsigned char fuckLLVM = (unsigned int)row.get(7); //will not accept narrowing in initialization of the Story object. So need to narrow here
-		Story story = { row.get(0), (std::string)row.get(1), (std::string)row.get(2), row.get(3), row.get(4), row.get(6), fuckLLVM, row.get(8), (std::string)row.get(9) };//add result to return vector
-		ret[i] = story;
+		try {
+			Row row = res.fetchOne();
+			const  unsigned char fuckLLVM = (unsigned int)row.get(7); //LLVM will not accept narrowing in initialization of the Story object. So need to narrow here
+			Story story = { row.get(0), (std::string)row.get(1), (std::string)row.get(2), row.get(3),
+				row.get(4), row.get(6), fuckLLVM, row.get(8), row.get(9), row.get(10),
+				(std::string)row.get(11)/*author name from the join. MUST ALWAYS BE LAST*/, };//add result to return vector
+			ret[i] = story;
+		}
+		catch (const mysqlx::Error& err) {
+			cout << "ERROR: " << err << endl;
+			throw;
+		}
 	}
 
 	return ret;
@@ -529,7 +576,9 @@ Story DBInterface::pullStoryInfo(const uint32_t& id) {
 	ret.authorID = row.get(6);
 	ret.permission = (unsigned int)row.get(7);
 	ret.timestamp = row.get(8);
-	ret.authorName = (std::string)row.get(9);
+	ret.categories = row.get(9);
+	ret.wordcount = row.get(10);
+	ret.authorName = (std::string)row.get(11);
 
 	return ret;
 

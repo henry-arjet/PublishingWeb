@@ -1,5 +1,11 @@
 #include <arjet/WordCounter.h>
-uint WordCounter::countWords(const string& name) {
+#include <arjet/Timer.h>
+
+using std::cout;
+using std::endl;
+uint WordCounter::countWordsFile(const string& name) {
+	//Timer timer;
+	//timer.Start();
 	string filePath = workDir + name;
 	std::ifstream file(filePath);
 	if (!file.is_open()) {
@@ -7,6 +13,9 @@ uint WordCounter::countWords(const string& name) {
 		std::cout << filePath << std::endl;
 		return -1; //should be uint max I think?
 	}
+	//timer.Stop();
+	//cout << "opening the file took " << timer.Results() << " miliseconds" << endl;
+	//timer.Start();
 
 	//read file into a string
 	string contents;
@@ -15,24 +24,35 @@ uint WordCounter::countWords(const string& name) {
 	file.seekg(0, std::ios::beg);
 	file.read(&contents[0], contents.size());
 	file.close();
+	//timer.Stop();
+	//cout << "reading the file took " << timer.Results() << " miliseconds" << endl;
+	//timer.Start();
+
+	
+	
+	return countWords(contents);
 
 
-	if (contents.size() == 0) {
-		std::cout << "file empty" << std::endl;
-		return -1;
-	}
+
+}
+
+uint WordCounter::countWords(const string& input) {
 
 	//this algorithm finds chunks of the string without tags, and then when it encounters a tag,
 	//copies the "good" tagless chars to the clean string
 	//I came up with it myself, so there's probably a three line solution that does the same thing 5x as fast
 
+	if (input.size() == 0) {
+		std::cout << "file empty" << std::endl;
+		return -1;
+	}
 	string cleanContents;//contents of the file without tags
-	auto i = contents.begin();
+	auto i = input.begin();
 
-	std::string::iterator startOfGood = contents.begin();
-	
+	auto startOfGood = input.cbegin();
 
-	while (i <= contents.end()){
+
+	while (i <= input.end()) {
 		if (*i == '<') { //encounter the begining of a tag
 			if (startOfGood != i) { //make sure there is data to copy
 				cleanContents.append(startOfGood, i); //copy the good data to the good string
@@ -51,10 +71,12 @@ uint WordCounter::countWords(const string& name) {
 			else ++i;
 		}
 		else ++i;
-	} 
-
+	}
+	//timer.Stop();
+	//cout << "cleaning the string took " << timer.Results() << " miliseconds" << endl;
+	//timer.Start();
 	//std::cout << "The final string is\n\n" << cleanContents << "\n\n" << std::endl;
-	
+
 	//word count via state
 	uint count = 0; //return value; number of words in the file
 	bool white = true; //is the previous char whitespace?
@@ -68,10 +90,11 @@ uint WordCounter::countWords(const string& name) {
 				++count;
 			}
 			white = false;
-		} 
+		}
 		++i;
 	}
-
-	return count;	
-
+	//timer.Stop();
+	//cout << "counting the words took " << timer.Results() << " miliseconds" << endl;
+	cout << "I counted " << count << "words" << endl;
+	return count;
 }

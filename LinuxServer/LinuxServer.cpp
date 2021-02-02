@@ -91,6 +91,8 @@ value storyToJSON(const Story& story) {
     obj["authorID"] = value::number(story.authorID);
     obj["permission"] = value::number(story.permission);
     obj["timestamp"] = value::number((int64_t)story.timestamp);
+    obj["categories"] = value::number(story.categories);
+    obj["wordcount"] = value::number(story.wordcount);
     obj["authorName"] = value::string(story.authorName);
     return obj;
 }
@@ -112,6 +114,8 @@ Story JSONToStory(value obj) { //NOT safe. Must make safe elsewhere
     story.authorID = stoi(obj["authorID"].as_string());
     story.permission = stoi(obj["permission"].as_string());
     story.timestamp = stoi(obj["timestamp"].as_string());
+    story.categories = stoi(obj["categories"].as_string());
+    story.wordcount = stoi(obj["wordcount"].as_string());
     story.authorName = obj["authorName"].as_string();
 
     return story;
@@ -623,8 +627,12 @@ void handleLogin(http_request const& req) {
 
 
 void handlePut(http_request const& req) {
-    auto tokens = splitTokens(req);
 
+    //Timer timer;
+    //timer.Start();
+    auto tokens = splitTokens(req);
+    //timer.Stop();
+    //cout << "splitting tokens took " << timer.Results() << " miliseconds" << endl;
     if ((tokens[0]) == "db") {
         handleDbPut(req, tokens);
     }
@@ -635,7 +643,12 @@ void handlePut(http_request const& req) {
         handlePutNew(req, tokens);
     }
     else if (tokens[0] == "writer") {
+        //Timer timer;
+        //timer.Start();
         handlePutWriter(req, std::stoi(tokens[1]));
+        //timer.Stop();
+        //cout << "handlePutWriter took " << timer.Results() << " miliseconds" << endl;
+
     }
     else if (tokens[0] == "story") {
         handlePutStory(req, std::stoi(tokens[1]));
@@ -707,14 +720,18 @@ void addStoryMeta(http_request const& req) {
 }
 
 void handlePutWriter(http_request const& req, uint32_t id) {
+    std::vector<unsigned char> content = req.extract_vector().get();
+    WordCounter counter;
+    uint wordCount = counter.countWords(reinterpret_cast<char*>(content.data()));
     std::ofstream file;
     file.open("../Stories-Dirty/" + std::to_string(id) + ".html", std::ios::trunc); //saved in dirty as it is unsanitized user input
-    std::vector<unsigned char> content = req.extract_vector().get();
     file.write(reinterpret_cast<char*>(content.data()), content.size());
     file.close();
-    std::system("sudo ../SanitizerBuild/Sanitizer");
     //launches the C#-based sanitizer to prevent xss. Outputs the cleaned stories into ../stories
     req.reply(201U);
+    std::system("../SanitizerBuild/Sanitizer");
+    dbp->updateStoryWordCount(id, wordCount);
+
 }
 
 void handleDbPut(http_request const& req, vector<std::string> tokens) {
@@ -810,7 +827,7 @@ void autoSort(uint64_t miliseconds) {
 }
 
 int main(int argc, char* argv[]) {
-    cout << "lets test the counting!" << endl;
+    
 
     string localIP = "192.168.0.12";
 
@@ -863,7 +880,7 @@ int main(int argc, char* argv[]) {
 
     listener.support(web::http::methods::PUT, handlePut);
 
-    std::thread sorter(autoSort, 15 * 1000);
+    std::thread sorter(autoSort, 30 * 1000);
 
     try {
         listener.open().wait();

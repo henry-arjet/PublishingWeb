@@ -24,6 +24,8 @@ struct Story {
 	unsigned int authorID;
 	unsigned char permission;
 	int64_t timestamp;
+	uint64_t categories = 0;
+	uint32_t wordcount = 0;
 	std::string authorName;
 };
 
@@ -65,6 +67,7 @@ public:
 	uint32_t addUser(const User& user); // returns ID upon success, 0 upon fail
 
 	bool updateStory(Story story);//returns true on success, false on fail
+	bool updateStoryWordCount(uint id, uint count); //just updates the word count of a story
 	uint32_t addStory(Story story);//returns id on success, 0 on fail
 
 	void updateRating(uint32_t storyID);//recalculates average rating for a story

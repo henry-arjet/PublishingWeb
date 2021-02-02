@@ -72,7 +72,8 @@ class CardGrid extends Component {
                  views={this.CleanViews(props.results[i].views)} 
                  time={this.TimeString(props.results[i].timestamp)}
                  authorID={props.results[i].authorID}
-                 authorName={props.results[i].authorName}/>);
+                 authorName={props.results[i].authorName}
+                 words={props.results[i].wordcount}/>);
         }
         return cardList;
     }

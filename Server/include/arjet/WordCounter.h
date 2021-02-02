@@ -11,8 +11,11 @@ using std::string;
 class WordCounter
 {
 public:
+	WordCounter() {}
+	WordCounter(const string& inDir) { workDir = inDir; } //sets the working dir
 	void setWorkDir(const string &inDir) { workDir = inDir; } //sets the working directory, should be either bio or stories
-	uint countWords(const string& name); //counts the words in a given story and returns them
+	uint countWordsFile(const string& name); //counts the words in a given story file and returns them
+	uint countWords(const string& input); //counts the words in a given story string and returns them
 private:
 	string workDir;
 };

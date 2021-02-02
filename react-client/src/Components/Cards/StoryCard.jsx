@@ -31,6 +31,7 @@ class StoryCard extends Component {
                             <Col className = "flexR">
                                 <Row className = "flexB">
                                     <LinkContainer to = {"/users/" + this.props.authorID}><Card.Link>{this.props.authorName}</Card.Link></LinkContainer>
+                                    {this.props.words + " words"}
                                 </Row>
                             </Col>
                         </Container>
