@@ -23,7 +23,6 @@ function StoryMeta() {
 
 
   function timeString(upTime){
-    console.log(upTime);
     let epoch = Date.now();
     let mils = epoch-upTime; //how many miliseconds ago was it uploaded
     if (mils > 31536000000){

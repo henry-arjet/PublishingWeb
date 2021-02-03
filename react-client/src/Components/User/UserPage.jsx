@@ -9,12 +9,13 @@ import { LinkContainer } from "react-router-bootstrap";
 function UserPage() {
   let auth = useContext(AuthContext);
   const [results, setResults] = useState({});
-  const [name, setName] = useState("");
-  const [gotResults, setGotResults] = useState(false);
-  //const [isSelf, setIsSelf] = useState(false); //is this the user's own page
+  const [userRetrieved, setUserRetrieved] = useState({});
+  const [name, setName] = useState(0);
   const pageID = location.pathname.substring(location.pathname.lastIndexOf("/") + 1);
   const isSelf = pageID == auth.authTokens.id?true:false;
-  useEffect(() => {
+
+  if (pageID != userRetrieved){//if we haven't loaded the results for this user. 
+                               //React router means user can change without component remounting
     let path =location.pathname + '/stories/?p=1';
     isSelf?path += '&a=self':path+= '&a=public';
     fetch(path, { headers: { Authorization: auth.authTokens.head,},})
@@ -22,10 +23,9 @@ function UserPage() {
     .then(data => {
       setResults(data.results);
       setName(data.name);
-      setGotResults(true); 
-      });
-    //gotResults.id == auth.authTokens.id?setIsSelf(true):setIsSelf(false);
-  }, []); //this pattern of useEffect is basically componentDidMount
+      setUserRetrieved(pageID); 
+    });
+  }
 
   function logout(){
     localStorage.removeItem("tokens"); auth.authTokens = null;
@@ -39,6 +39,7 @@ function UserPage() {
         <div>
           <h3>Welcome, {auth.authTokens.username}</h3>
           <LinkContainer to="/new/meta"><Button variant="dark" className="paddedButton"> Upload New Story</Button></LinkContainer>
+          <LinkContainer to={"/writer/bios/" + pageID}><Button variant="dark" className="paddedButton"> Edit Bio</Button></LinkContainer>
           <Link to="/" onClick={logout} >Log Out</Link>
         </div>
       );
@@ -51,7 +52,7 @@ function UserPage() {
     );
   }
   
-  if(gotResults){
+  if(userRetrieved){ //return the user's stories if they have been loaded
     return(
       <Container className="page">
         {selfElements()}

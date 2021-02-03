@@ -16,6 +16,8 @@ import WritingPage from './StoryComponent/WritingPage';
 import StoryMetaCreator from './StoryComponent/StoryMetaCreator';
 import NewestPage from './NewestPage';
 
+
+
 function App(props){
     const existingTokens = JSON.parse(localStorage.getItem("tokens"));
     const backup = { id: 0, username: "", password: "", privilege: 0, head: ""};
