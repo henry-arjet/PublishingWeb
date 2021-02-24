@@ -35,10 +35,12 @@ struct User {
 	unsigned char hash[32];
 	uint32_t privilege;
 	unsigned char salt[32];
+	uint32_t bio; //0 is none, 1 is private, 2 is public
 	User() {
 		id = 0;
 		username = "";
 		uint32_t privilege = 0;
+		bio = 0;
 	}
 };
 
@@ -48,6 +50,7 @@ struct UserClear{//Used for holding the user in cleartext
 	std::string username;
 	std::string password;
 	uint32_t privilege;
+	uint32_t bio;
 };
 class DBInterface {
 public:

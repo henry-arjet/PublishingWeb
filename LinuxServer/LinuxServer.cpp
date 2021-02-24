@@ -35,6 +35,7 @@ std::string distFolder = "../react-client/dist/"; //the folder where react build
 DBInterface* dbp; //pointer to the DBInterface class created in main()
 
 void handleGet(http_request const& req);
+void handleGetBios(http_request const& req, string path);
 void handleGetQuery(http_request const& req);
 void handleGetQueryResults(http_request const& req, QueryMap);
 void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap queries);
@@ -55,6 +56,7 @@ void handlePutStory(http_request const& req, uint32_t id);
 void handlePutNew(http_request const& req, vector<std::string> tokens);
 void addStoryMeta(http_request const& req);
 void handlePutWriter(http_request const& req, uint32_t id);
+void handlePutBioWriter(http_request const& req, uint32_t id);
 void handleDbPut(http_request const& req, vector<std::string> tokens);
 void addStoryMetaDev(http_request const& req);
 void handleSignup(http_request const& req);
@@ -127,6 +129,7 @@ UserClear JSONToUserClear(value obj) {
     user.username = obj["username"].as_string();
     user.password = obj["password"].as_string();
     user.privilege = 0;
+    user.bio = 0;
     return user;
 }
 
@@ -151,6 +154,7 @@ value UserClearToJSON(UserClear user) {//replies to a login/signup request with 
     obj["username"] = value(user.username);
     obj["password"] = value(user.password);
     obj["privilege"] = user.privilege;
+    obj["bio"] = user.bio;
     return obj;
 }
 
@@ -268,21 +272,60 @@ vector<std::string> splitTokens(http_request const& req) {
 
 
 void handleGet(http_request const& req) {
-    auto path = req.relative_uri().to_string();
+    string path = req.relative_uri().path();
     std::cout << "GET called at " << path << endl;
-
+    std::cout  << endl;
     if (req.relative_uri().query().size() != 0) { //yes yes I know != 0 is unnecessary but it's easier to read
         handleGetQuery(req);
     }
-    else if (req.relative_uri().path().find_last_of(L'.') != std::string::npos) {
-        auto len = req.relative_uri().path().size();
-        if (req.relative_uri().path().substr(len - 10, 10) == "cbundle.js") {//cached js app
+    else if (path.find_last_of(L'.') != std::string::npos) {
+        auto len = path.size();
+        if (path.substr(len - 10, 10) == "cbundle.js") {//cached js app
             handleGetBundleCache(req);
         }
         else handleGetFile(req);
     }
+    else if (path.substr(0, 5) == "/bio/") {
+        handleGetBios(req, path);
+    }
     else {
         handleGetRoot(req);
+    }
+}
+
+void handleGetBios(http_request const& req, string path) {
+    cout << path.substr(path.find_last_of(L'/')) << endl;
+    uint id = std::stoi(path.substr(path.find_last_of(L'/') + 1));
+
+    User bioUser = dbp->pullUser(id); //we need to pull the author of the bio to find if said bio is published
+    if (bioUser.bio == 0) { req.reply(404); return; } //the user has no bio
+    
+
+    
+    if (bioUser.bio == 1 ) { //unpublished
+        User accessingUser;
+        handleAuthentication(req, accessingUser);
+        if (accessingUser.id != bioUser.id && accessingUser.privilege < 2){ //only procede if admin or user's own bio
+            req.reply(403U);
+            return;
+        }
+    }
+
+    //get the bio
+    std::wifstream file;
+    string bioPath = "../bios/" + std::to_string(id) + ".html";
+    cout << bioPath << endl;
+    try {
+        concurrency::streams::fstream::open_istream(bioPath, std::ios::in)
+            .then([=](concurrency::streams::istream is) {
+            req.reply(200U, is, "text/html");
+                }).wait(); //need to wait for the try block to work
+                return;
+    }
+    catch (...) { //Catches if file not found. So reply with 404
+        cout << "Bio file not found" << endl;
+        req.reply(404u);
+        return;
     }
 }
 
@@ -608,6 +651,8 @@ void handleLogin(http_request const& req) {
 
     userClear.privilege = user.privilege; //for replying with a privilege level
 
+    userClear.bio = user.bio; //used so the user can know if their story is published
+
     CryptoPP::SHA256 sha;
 
     sha.Update((const byte*)userClear.password.data(), userClear.password.size());
@@ -643,12 +688,11 @@ void handlePut(http_request const& req) {
         handlePutNew(req, tokens);
     }
     else if (tokens[0] == "writer") {
-        //Timer timer;
-        //timer.Start();
         handlePutWriter(req, std::stoi(tokens[1]));
-        //timer.Stop();
-        //cout << "handlePutWriter took " << timer.Results() << " miliseconds" << endl;
 
+    }
+    else if (tokens[0] == "biowriter") {
+        handlePutBioWriter(req, std::stoi(tokens[1]));
     }
     else if (tokens[0] == "story") {
         handlePutStory(req, std::stoi(tokens[1]));
@@ -729,7 +773,22 @@ void handlePutWriter(http_request const& req, uint32_t id) {
     file.close();
     //launches the C#-based sanitizer to prevent xss. Outputs the cleaned stories into ../stories
     req.reply(201U);
-    std::system("../SanitizerBuild/Sanitizer");
+    std::system("../SanitizerBuild/Sanitizer.exe");//yes, for real. Compiled in vs, microsoft wants it as an exe, linux doesn't care
+    dbp->updateStoryWordCount(id, wordCount);
+
+}
+
+void handlePutBioWriter(http_request const& req, uint32_t id) {
+    std::vector<unsigned char> content = req.extract_vector().get();
+    WordCounter counter;
+    uint wordCount = counter.countWords(reinterpret_cast<char*>(content.data()));
+    std::ofstream file;
+    file.open("../bios-dirty/" + std::to_string(id) + ".html", std::ios::trunc); //saved in dirty as it is unsanitized user input
+    file.write(reinterpret_cast<char*>(content.data()), content.size());
+    file.close();
+    //launches the C#-based sanitizer to prevent xss. Outputs the cleaned bios into ../bios
+    req.reply(201U);
+    std::system("../SanitizerBuild/Sanitizer.exe");//yes, for real. Compiled in vs, microsoft wants it as an exe, linux doesn't care
     dbp->updateStoryWordCount(id, wordCount);
 
 }
@@ -829,7 +888,7 @@ void autoSort(uint64_t miliseconds) {
 int main(int argc, char* argv[]) {
     
 
-    string localIP = "192.168.0.12";
+    string localIP = "192.168.0.9";
 
     if (argc > 1){ //allows setting local ip through command line
         localIP = argv[1];

@@ -11,11 +11,14 @@ function UserPage() {
   const [results, setResults] = useState({});
   const [userRetrieved, setUserRetrieved] = useState({});
   const [name, setName] = useState(0);
+  const [bioHTML, setBioHTML] = useState("");
+  const [blockUserFetch, setBlockUserFetch] = useState(false); //used to make sure only one request for user info and bio is sent
   const pageID = location.pathname.substring(location.pathname.lastIndexOf("/") + 1);
   const isSelf = pageID == auth.authTokens.id?true:false;
 
-  if (pageID != userRetrieved){//if we haven't loaded the results for this user. 
+  if (pageID != userRetrieved && !blockUserFetch){//if we haven't loaded the results for this user.
                                //React router means user can change without component remounting
+    setBlockUserFetch(true); // kinda semaphore
     let path =location.pathname + '/stories/?p=1';
     isSelf?path += '&a=self':path+= '&a=public';
     fetch(path, { headers: { Authorization: auth.authTokens.head,},})
@@ -24,22 +27,32 @@ function UserPage() {
       setResults(data.results);
       setName(data.name);
       setUserRetrieved(pageID); 
+      setBlockUserFetch(false);
     });
-  }
-
+    fetch("/bio/" + pageID, {headers: {Authorization: auth.authTokens.head,},}).then(response =>{
+        if (response.status==200) response.text().then(data => setBioHTML(data));
+        }
+      );
+    }
   function logout(){
     localStorage.removeItem("tokens"); auth.authTokens = null;
     auth.setAuthTokens({ id: 0, username: "", password: "", privilege: 0, head: ""});
     return(<Redirect to="/" />);
   }
   
+  const bio = () => {
+    if (!bioHTML) return;
+    else return (<div dangerouslySetInnerHTML={{__html: bioHTML}}/>);
+  }
+
   const selfElements = () => {
     if (isSelf){
       return (
         <div>
           <h3>Welcome, {auth.authTokens.username}</h3>
           <LinkContainer to="/new/meta"><Button variant="dark" className="paddedButton"> Upload New Story</Button></LinkContainer>
-          <LinkContainer to={"/writer/bios/" + pageID}><Button variant="dark" className="paddedButton"> Edit Bio</Button></LinkContainer>
+          {<LinkContainer to={"/biowriter/" + pageID}><Button variant="dark" className="paddedButton"> Edit Bio</Button></LinkContainer>
+            }
           <Link to="/" onClick={logout} >Log Out</Link>
         </div>
       );
@@ -57,6 +70,8 @@ function UserPage() {
       <Container className="page">
         {selfElements()}
         
+        {bio()}
+
         <CardGrid results={results} />
       </Container>
     );

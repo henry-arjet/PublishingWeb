@@ -2,6 +2,7 @@ const path = require('path');
 const SRC_DIR = path.join(__dirname, '/react-client/src');
 const webpack = require('webpack');
 
+
 module.exports = {
   entry: `${SRC_DIR}/index.jsx`,
   resolve: {

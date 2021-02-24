@@ -8,11 +8,12 @@ import TopRatedPage from './TopRatedPage';
 import StoryPage from './StoryComponent/StoryPage';
 import DevPage from './DevTools/DevPage';
 import {AuthContext} from "./Context/Auth";
-import PrivateRoute from "./PrivateRoute"
-import LoginPage from "./Authentication/LoginPage"
+import PrivateRoute from "./PrivateRoute";
+import LoginPage from "./Authentication/LoginPage";
 import SignUpPage from './Authentication/SignUpPage';
 import UserPage from './User/UserPage';
-import WritingPage from './StoryComponent/WritingPage';
+import StoryWritingPage from './StoryComponent/StoryWritingPage';
+import BioWritingPage from './User/BioWritingPage';
 import StoryMetaCreator from './StoryComponent/StoryMetaCreator';
 import NewestPage from './NewestPage';
 
@@ -41,7 +42,8 @@ function App(props){
               <Route name="userpage" path="/users/" component={UserPage} />
               <Route name="login" path="/auth/login" component={LoginPage}/>
               <Route name="signup" path="/auth/signup" component={SignUpPage}/>
-              <PrivateRoute name="writer" path="/writer" component={WritingPage}/>
+              <PrivateRoute name="writer" path='/writer' component={StoryWritingPage} />
+              <PrivateRoute name="biowriter" path="/biowriter" component={BioWritingPage} />
               <Route name="newest" path="/newest" component={NewestPage}/>
             </switch>
             <Footer />

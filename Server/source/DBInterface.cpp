@@ -68,6 +68,7 @@ User DBInterface::pullUser(const uint32_t& id) {
 	memcpy(ret.hash, row.get(2).getRawBytes().begin(), 32);
 	memcpy(ret.salt, row.get(3).getRawBytes().begin(), 32);
 	ret.privilege = row.get(4);
+	ret.bio = row.get(5);
 	return ret;
 }
 
@@ -88,7 +89,7 @@ uint32_t DBInterface::addUser(const User& user) {
 	Table table = db->getTable("users");
 	try{
 		semaphore.wait();
-		table.insert().values(Value(), user.username, bytes(user.hash, 32), bytes(user.salt, 32), user.privilege).execute();
+		table.insert().values(Value(), user.username, bytes(user.hash, 32), bytes(user.salt, 32), user.privilege, user.bio).execute();
 		//now to find the last inserted id
 		Row row = table.select("LAST_INSERT_ID()").execute().fetchOne();
 		semaphore.notify();

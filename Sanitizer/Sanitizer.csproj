@@ -6,6 +6,7 @@
     <RuntimeIdentifiers>ubuntu.14.04-x64;win10-x64</RuntimeIdentifiers>
     <StartupObject>Sanitizer.Program</StartupObject>
     <Configurations>Debug;Release;Linux</Configurations>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -14,8 +15,9 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Linux|AnyCPU'">
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>X64</PlatformTarget>
     <OutputPath>C:\Users\Henry\Documents\PublishingWeb\SanitizerBuild\</OutputPath>
+    <WarningLevel>2</WarningLevel>
   </PropertyGroup>
 
   <ItemGroup>

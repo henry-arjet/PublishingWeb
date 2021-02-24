@@ -6,10 +6,11 @@ function PrivateRoute({ component: Component, ...rest }) {
   let auth = useContext(AuthContext);
   return (
     <Route {...rest}
-      render={props => auth.authTokens ?
-        ( <Component {...props} />) 
-        : ( <Redirect to="/auth/login" />)
-      }
+    render={props => {
+      if (auth.authTokens) { return ( <Component {...props} />)}
+      else return ( <Redirect to="/auth/login" />);
+    }
+    }
     />
   );
 }
