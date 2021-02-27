@@ -335,9 +335,26 @@ int DBInterface::addView(uint32_t storyID, uint32_t userIP) {
 	}
 
 	semaphore.wait();
-	table.insert().values(storyID, userIP).execute();
-	semaphore.notify();
-
+	try {
+		table.insert().values(storyID, userIP).execute();
+		semaphore.notify();
+	}
+	catch (const mysqlx::Error& err) {
+		cout << "ERROR: " << err << endl;
+		semaphore.notify();
+		return 500;
+	}
+	catch (std::exception& ex) {
+		cout << "STD EXCEPTION: " << ex.what() << endl;
+		semaphore.notify();
+		return 500;
+	}
+	catch (const char* ex) {
+		cout << "EXCEPTION: " << ex << endl;
+		semaphore.notify();
+		return 500;
+	}
+	
 	return 200;
 }
 

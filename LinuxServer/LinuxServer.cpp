@@ -294,7 +294,7 @@ void handleGet(http_request const& req) {
 }
 
 void handleGetBios(http_request const& req, string path) {
-    cout << path.substr(path.find_last_of(L'/')) << endl;
+    cout << "Pulling bio " << path.substr(path.find_last_of(L'/') + 1) << endl;
     uint id = std::stoi(path.substr(path.find_last_of(L'/') + 1));
 
     User bioUser = dbp->pullUser(id); //we need to pull the author of the bio to find if said bio is published
