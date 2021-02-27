@@ -110,6 +110,37 @@ uint32_t DBInterface::addUser(const User& user) {
 	}
 }
 
+uint32_t DBInterface::updateUser(const User& user) {
+	Table table = db->getTable("users");
+	try {
+		std::string s = "id = " + std::to_string(user.id);
+		semaphore.wait();
+		table.update().set("username", user.username).set("pwhash", bytes(user.hash, 32)).set("privilege", user.privilege)
+			.set("bio", user.bio).where(s).execute(); //reset the hit detector
+		semaphore.notify();
+		return true;
+	}
+
+	catch (const mysqlx::Error& err)
+	{
+		semaphore.notify();
+		cout << "ERROR: " << err << endl;
+		return false;
+	}
+	catch (std::exception& ex)
+	{
+		semaphore.notify();
+		cout << "STD EXCEPTION: " << ex.what() << endl;
+		return false;
+	}
+	catch (const char* ex)
+	{
+		semaphore.notify();
+		cout << "EXCEPTION: " << ex << endl;
+		return false;
+	}
+	
+}
 
 bool DBInterface::updateStory(Story story){
 	Table table = db->getTable("test1");

@@ -48,11 +48,11 @@ function WritingPage(props) {
         headers: {Authorization: auth.authTokens.head},})
       .then(response => response.json())
       .then(data => {
-        data.permission == 1?setIsPublic(true):setIsPublic(false);
+        (data.permission == 1)?setIsPublic(true):setIsPublic(false);
       });
     }
     else{
-      auth.authTokens.bio== 2?setIsPublic(true):setIsPublic(false);
+      auth.authTokens.bio == 2?setIsPublic(true):setIsPublic(false);
     }
   }, []); //this pattern of useEffect is basically componentDidMount
   
@@ -79,7 +79,7 @@ function WritingPage(props) {
       body: tinyMCE.activeEditor.getContent(),
     }).then(fetch(window.location.pathname + "/publish", {method: 'POST',
     headers: { Authorization: auth.authTokens.head}})
-    ).then(setShouldRedirect(id)); //redirect to the story page for this story
+    ).then(auth.authTokens.bio = 2).then(setShouldRedirect(id)); //redirect to the story page for this story
   }
 
   function testRedirect(){
@@ -95,6 +95,7 @@ function WritingPage(props) {
     }).then(response => {
       if (response.status == 200){
         setIsPublic(false);
+        auth.authTokens.bio = 2;
         setShowPrivate(true);
         setTimeout(() => setShowPrivate(false), 4000);
       }

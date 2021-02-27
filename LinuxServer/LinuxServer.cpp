@@ -49,6 +49,7 @@ void handleDbPost(http_request const& req, vector<std::string> tokens);
 void updateStory(http_request const& req);
 void handleLogin(http_request const& req);
 void publish(http_request const& req, uint32_t id, uint32_t newPermission);
+void publishBio(http_request const& req, uint32_t id, uint32_t newPermission);
 
 
 void handlePut(http_request const& req);
@@ -543,8 +544,6 @@ void handleGetBundleCache(http_request const& req) {
         is.close();
     }
 
-
-
 }
 
 
@@ -569,7 +568,40 @@ void handlePost(http_request const& req) {
         }
         else req.reply(404U);
     }
+    else if (tokens[0] == "biowriter") {
+        if (tokens[2] == "publish") {
+            publishBio(req, std::stoi(tokens[1]), 2);
+        }
+        else if (tokens[2] == "makeprivate") {
+            publishBio(req, std::stoi(tokens[1]), 1);
+        }
+        else req.reply(404U);
+    }
     else req.reply(404);
+}
+void publishBio(http_request const& req, uint32_t id, uint32_t newPermission) { //sets the 'permission' aspect of the story, changing who can access it
+    User user;
+    if (!handleAuthentication(req, user)) return;
+    if (id == user.id) {//own bio
+        user.bio = newPermission; //the important line
+        if (dbp->updateUser(user)) {
+            req.reply(200U);
+        }
+        else req.reply(500U);
+        return;
+    }
+    else if (user.privilege >= 2) {
+        User bioUser = dbp->pullUser(id);
+        bioUser.bio = newPermission;
+        if (dbp->updateUser(user)) {
+            req.reply(200U);
+        }
+        else req.reply(500U);        
+    }
+    else {
+        req.reply(403U); //not the author or an admin
+        return;
+    }
 }
 
 void publish(http_request const& req, uint32_t id, uint32_t newPermission) { //sets the 'permission' aspect of the story, changing who can access it

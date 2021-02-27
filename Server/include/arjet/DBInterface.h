@@ -68,6 +68,7 @@ public:
 	User pullUser(const uint32_t& id);
 	uint32_t findUser(const std::string& username); //searches for a user in database, returns id if found or 0 if not
 	uint32_t addUser(const User& user); // returns ID upon success, 0 upon fail
+	uint32_t updateUser(const User& user); // returns ID upon success, 0 upon fail
 
 	bool updateStory(Story story);//returns true on success, false on fail
 	bool updateStoryWordCount(uint id, uint count); //just updates the word count of a story
