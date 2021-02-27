@@ -85,7 +85,7 @@ function WritingPage(props) {
   function testRedirect(){
     if (shouldRedirect != 0){
         return(
-            <Redirect to= {"/story/" + shouldRedirect}/>
+            <Redirect to= {"/" + (props.writerType=="story"?"story":"users") + "/" + shouldRedirect}/>
         );
     }
   }
