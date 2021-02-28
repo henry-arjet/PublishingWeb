@@ -13,6 +13,8 @@ import 'tinymce/plugins/link';
 import 'tinymce/plugins/anchor';
 import 'tinymce/plugins/code';
 import 'tinymce/plugins/save';
+import 'tinymce/plugins/nonbreaking';
+
 
 //This page is put behind a private route, so it should only be accessed if the user authtokens are filled
 function WritingPage(props) {
@@ -141,7 +143,7 @@ function WritingPage(props) {
             initialValue={"<p>Write your " + props.writerType + " here!</p>"}
             init={{
               plugins: [
-                'link, paste, save, code',
+                'link, paste, save, code, nonbreaking',
               ],
               save_onsavecallback: handleSubmit,
               toolbar: 'save | undo redo | styleselect | code | bold italic | alignleft aligncenter alignright alignjustify | outdent indent',
@@ -152,6 +154,8 @@ function WritingPage(props) {
               branding: false,
               save_enablewhendirty: false,
               setup: load(),
+              content_style: "p { margin: 0; }",
+              nonbreaking_force_tab: true
               }}
           />  
       </Container> {/*storyEditor*/}

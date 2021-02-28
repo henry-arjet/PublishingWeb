@@ -86,3 +86,4 @@ blockquote{
 .inline {
   display: inline-block;
 }
+p { margin: 0; }
