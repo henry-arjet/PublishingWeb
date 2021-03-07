@@ -33,6 +33,7 @@ namespace Sanitizer
             string html = File.ReadAllText(pathDirty + name);
 
             HtmlSanitizer sanitizer = new HtmlSanitizer();
+            sanitizer.AllowedTags.Remove("img");
             string cleanHtml = sanitizer.Sanitize(html);
 
             File.WriteAllText(pathClean + name, cleanHtml);
