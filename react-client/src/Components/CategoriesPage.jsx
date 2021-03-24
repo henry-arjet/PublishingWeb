@@ -1,10 +1,19 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import CardGrid from './Cards/CardGrid'
 
 function CategoriesPage() {
-    let cats = [{name: "Science Fiction", linkName:"scifi", description: "bruh you know what scifi is", mask: 0b1},
-        {name: "test 2", linkName:"test_2", description: "a second test category", mask: 0b10}];
-    return(<CardGrid categories={cats} />);
+    let [gotResults, setGotResults] = useState(false);
+    let [results, setResults] = useState();
+    useEffect(() => {
+        fetch(window.location.protocol + "//" + window.location.host + '/cats.json')
+        .then(response => response.json())
+        .then(data => {setResults(data), setGotResults(true)});
+    }, []);
+    if(gotResults)return(<CardGrid categories={results} />);
+    else return(<div>
+        <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+        <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+      </div>)
 }
 
 export default CategoriesPage;

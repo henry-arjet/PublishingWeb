@@ -1,0 +1,10 @@
+[
+    {"name": "Science Fiction", "linkName":"scifi", "description": "Bruh you know what scifi is", "mask": 1},
+    {"name": "Comedy", "linkName":"comedy", "description": "Funny stories", "mask": 2},
+    {"name": "Mystery", "linkName":"mystery", "description": "Who let the dogs out?", "mask": 4},
+    {"name": "Literary Fiction", "linkName":"litfic", "description": "Fiction without all the cool stuff", "mask": 8},
+    {"name": "Horror", "linkName":"horror", "description": "Scary stories", "mask": 16},
+    {"name": "Fantasy", "linkName":"fantasy", "description": "A world of magic", "mask": 32},
+    {"name": "Historical Fiction", "linkName":"history", "description": "Tales of long ago", "mask": 64},
+    {"name": "Romance", "linkName":"romance", "description": "tales of love", "mask": 128}
+]

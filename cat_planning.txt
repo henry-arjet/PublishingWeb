@@ -1,2 +1,2 @@
 category 64 bit mask
-select * from 
+select * from test1 where (category & catSearch)

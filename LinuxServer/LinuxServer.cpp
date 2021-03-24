@@ -70,6 +70,7 @@ void createContentMap() {
     contentMap[U(".jpg")] = U("image/jpeg");
     contentMap[U(".jpeg")] = U("image/jpeg");
     contentMap[U(".txt")] = U("text/plain");
+    contentMap[U(".json")] = U("application/json");
 }
 
 void handle_error(pplx::task<void>& t) {
