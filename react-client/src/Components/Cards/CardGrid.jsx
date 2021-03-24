@@ -94,7 +94,7 @@ class CardGrid extends Component {
         console.log("hitC");
         let cardList = [];
         for (let i = 0; i<props.categories.length; i++){
-            let li = "categories/" + props.categories[i].linkName;
+            let li = "categories/" + props.categories[i].linkName + "/" + props.categories[i].mask;
             cardList.push(<CategoryCard link={li} title={props.categories[i].name} description={props.categories[i].description}/>);
         }
         return cardList

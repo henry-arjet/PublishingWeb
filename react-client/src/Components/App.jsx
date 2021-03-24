@@ -17,6 +17,7 @@ import BioWritingPage from './User/BioWritingPage';
 import StoryMetaCreator from './StoryComponent/StoryMetaCreator';
 import NewestPage from './NewestPage';
 import CategoriesPage from './CategoriesPage';
+import CategoryPage from './CategoryPage';
 
 
 
@@ -46,7 +47,8 @@ function App(props){
               <PrivateRoute name="writer" path='/writer' component={StoryWritingPage} />
               <PrivateRoute name="biowriter" path="/biowriter" component={BioWritingPage} />
               <Route name="newest" path="/newest" component={NewestPage}/>
-              <Route name="categories" path="/categories" component={CategoriesPage}/>
+              <Route name="categories" exact path="/categories" component={CategoriesPage}/>
+              <Route name="category" exact path="/categories/*" component={CategoryPage}/>
             </switch>
             <Footer />
           </div>

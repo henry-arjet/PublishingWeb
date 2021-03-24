@@ -365,6 +365,9 @@ void handleGetQueryResults(http_request const& req, QueryMap queries) {
     if (queries.find("p") != queries.end()) {//which page
         offset = lim * (std::stoi(queries["p"]) - 1);
     }
+    if (queries.find("c") != queries.end()) {//category mask
+        where += " AND categories & " + queries["c"] + " != 0";
+    }
     if (queries.find("o") != queries.end()) {//order
         if (queries["o"] == "top") {
             stories = dbp->pullTopRated(where, offset, lim);
