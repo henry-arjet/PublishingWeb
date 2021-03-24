@@ -1,6 +1,7 @@
 import React, { Component} from 'react';
 import {Container} from 'react-bootstrap';
 import StoryCard from './StoryCard'
+import CategoryCard from './CategoryCard';
 class CardGrid extends Component {
     constructor(props){
     super(props);
@@ -64,6 +65,17 @@ class CardGrid extends Component {
     }
 
     MakeCards(props){//outputs a list of cards
+        console.log("hit");
+        if(this.props.categories){
+            console.log("test1");
+            return(this.MakeCats(this.props))
+        }else {
+            console.log("test2");
+            return(this.MakeStories(this.props));
+        }
+    }
+    MakeStories(props){//outputs a list of cards
+        console.log("hitS");
         var cardList = [];
         for (var i = 0; i < props.results.length; i++){
             let li = "story/" + props.results[i].id;
@@ -78,12 +90,22 @@ class CardGrid extends Component {
         return cardList;
     }
 
+    MakeCats(props){
+        console.log("hitC");
+        let cardList = [];
+        for (let i = 0; i<props.categories.length; i++){
+            let li = "categories/" + props.categories[i].linkName;
+            cardList.push(<CategoryCard link={li} title={props.categories[i].name} description={props.categories[i].description}/>);
+        }
+        return cardList
+    }
+
     render() {
         return (
         <Container fluid className="cardGrid">
             {this.MakeCards(this.props)}
         </Container>
-        )
+        );
     }
 }
 

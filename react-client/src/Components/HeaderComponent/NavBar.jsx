@@ -48,6 +48,9 @@ function NavBar() {
           <LinkContainer to="/newest"><Nav.Link className="headerNavButton">
             <strong>New</strong>
           </Nav.Link></LinkContainer>
+          <LinkContainer to="/categories"><Nav.Link className="headerNavButton">
+            <strong>Categories</strong>
+          </Nav.Link></LinkContainer>
           {DevTools()}
           {ProfileButton()}
           </Nav>
