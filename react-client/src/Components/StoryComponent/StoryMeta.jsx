@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom'
 import { LinkContainer } from 'react-router-bootstrap';
 import Rate from "./Rate"
 
+//This component is attached to a story page and renders the meta information of a story
+
 function StoryMeta() {
   const [meta, setMeta] = useState(null);
   const [gotResults, setGotResults] = useState(false);

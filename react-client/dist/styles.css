@@ -87,3 +87,8 @@ blockquote{
   display: inline-block;
 }
 p { margin: 0; }
+.dropdownGroup{
+  padding: 0;
+  display: flex;
+
+}
