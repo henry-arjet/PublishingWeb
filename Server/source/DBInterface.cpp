@@ -200,7 +200,7 @@ uint32_t DBInterface::addStory(Story story) {
 			story.permission = 2;
 			story.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 			semaphore.wait();
-			table.insert().values(Value(), story.title, story.path, 0, story.views, 0, story.authorID, story.permission, story.timestamp, 0, 0).execute();
+			table.insert().values(Value(), story.title, story.path, 0, story.views, 0, story.authorID, story.permission, story.timestamp, story.categories, 0).execute();
 			story.id = table.select("LAST_INSERT_ID()").execute().fetchOne().get(0);
 			story.path = "stories/" + std::to_string(story.id) + ".html";
 			table.update().set("path", story.path).where("id = " + std::to_string(story.id)).execute();

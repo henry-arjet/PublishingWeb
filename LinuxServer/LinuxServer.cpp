@@ -775,7 +775,9 @@ void addStoryMeta(http_request const& req) {
     story.id = 0; //Not used in this function. Set to 0 to flag as error.
     story.authorID = authorID;
     try {
-        story.title = req.extract_json().get()["title"].as_string();
+        auto json = req.extract_json().get();
+        story.title = json["title"].as_string();
+        story.categories = json["cats"].as_integer();
     }
     catch (web::json::json_exception& ex) {
         cout << "JSON EXCEPTION: " << ex.what() << endl;
