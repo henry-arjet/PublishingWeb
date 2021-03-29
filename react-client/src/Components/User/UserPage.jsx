@@ -19,7 +19,10 @@ function UserPage() {
   if (pageID != userRetrieved && !blockUserFetch){//if we haven't loaded the results for this user.
                                //React router means user can change without component remounting
     setBlockUserFetch(true); // kinda semaphore
-    let path =location.pathname + '/stories/?p=1';
+    let page =parseInt(window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1)); //gets page number from url
+    if (!page){page = 1;} //if no page number, its 1
+
+    let path =location.pathname + '/stories/?p=' + page;
     isSelf?path += '&a=self':path+= '&a=public';
     fetch(path, { headers: { Authorization: auth.authTokens.head,},})
     .then(response => response.json())
@@ -69,10 +72,8 @@ function UserPage() {
     return(
       <Container className="page">
         {selfElements()}
-        
         {bio()}
-
-        <CardGrid results={results} />
+        <CardGrid results = {results} setBlockFetch = {setBlockUserFetch} supressSelect={true}/>
       </Container>
     );
   }else return(

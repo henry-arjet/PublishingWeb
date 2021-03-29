@@ -92,3 +92,8 @@ p { margin: 0; }
   display: flex;
 
 }
+
+.pageSelect{
+  display: flex;
+  justify-content: center;
+}

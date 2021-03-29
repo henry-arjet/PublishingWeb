@@ -47,8 +47,8 @@ function App(props){
               <PrivateRoute name="writer" path='/writer' component={StoryWritingPage} />
               <PrivateRoute name="biowriter" path="/biowriter" component={BioWritingPage} />
               <Route name="newest" path="/newest" component={NewestPage}/>
-              <Route name="categories" exact path="/categories" component={CategoriesPage}/>
-              <Route name="category" exact path="/categories/*" component={CategoryPage}/>
+              <Route name="categories" path="/categories" component={CategoriesPage}/>
+              <Route name="category" exact path="/category/*" component={CategoryPage}/>
             </switch>
             <Footer />
           </div>

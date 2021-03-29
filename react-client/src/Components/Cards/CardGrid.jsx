@@ -1,16 +1,21 @@
-import React, { Component} from 'react';
+import React, { Component, useState} from 'react';
 import {Container} from 'react-bootstrap';
 import StoryCard from './StoryCard'
 import CategoryCard from './CategoryCard';
-class CardGrid extends Component {
-    constructor(props){
-    super(props);
-    this.state = {
-        numCards: 0,
-    }
-    }//<h2>{this.props.results[0].title}</h2>
+import PageSelect from '../PageSelect';
+import { useHistory } from 'react-router';
+function CardGrid(props) {
+    const [redirect, setRedirect] = useState(false);
+    const [shouldRedirect, setShouldRedirect] = useState(false);
 
-    CleanViews(views){
+    const history = useHistory();
+    if(shouldRedirect){
+      props.setBlockFetch(false);
+      setShouldRedirect(false);
+      history.push(redirect);
+    }
+
+    function CleanViews(views){
         if(views < 1000){
             return views.toString();
         }else if (views < 10000){
@@ -22,7 +27,7 @@ class CardGrid extends Component {
         }else return (views/1000000).toFixed(0).toString() + "M";
     }
 
-    TimeString(upTime){
+    function TimeString(upTime){
         let epoch = Date.now();
         let mils = epoch-upTime; //how many miliseconds ago was it uploaded
         if (mils > 31536000000){
@@ -64,49 +69,51 @@ class CardGrid extends Component {
 
     }
 
-    MakeCards(props){//outputs a list of cards
-        console.log("hit");
-        if(this.props.categories){
-            console.log("test1");
-            return(this.MakeCats(this.props))
+    function MakeCards(props){//outputs a list of cards
+        if(props.categories){
+            return(
+                <Container fluid className="cardGrid">
+                    {MakeCats(props)}
+                </Container>
+            )
         }else {
-            console.log("test2");
-            return(this.MakeStories(this.props));
+            return(
+                <Container fluid className="cardGrid">
+                    {MakeStories(props)}
+                </Container>
+            );
         }
     }
-    MakeStories(props){//outputs a list of cards
-        console.log("hitS");
+    function MakeStories(props){//outputs a list of cards
         var cardList = [];
         for (var i = 0; i < props.results.length; i++){
             let li = "story/" + props.results[i].id;
             cardList.push(<StoryCard link={li} title={props.results[i].title}
                  rating={props.results[i].rating == 0?null:(props.results[i].rating / 10000).toFixed(1).toString()}//0 is default for unrated values
-                 views={this.CleanViews(props.results[i].views)} 
-                 time={this.TimeString(props.results[i].timestamp)}
+                 views={CleanViews(props.results[i].views)} 
+                 time={TimeString(props.results[i].timestamp)}
                  authorID={props.results[i].authorID}
                  authorName={props.results[i].authorName}
                  words={props.results[i].wordcount}/>);
         }
         return cardList;
     }
-
-    MakeCats(props){
-        console.log("hitC");
+    function checkPageSelect(props){
+        if (props.supressSelect){return}
+        else return(<PageSelect shouldDir = {setShouldRedirect} dir = {setRedirect}/>)
+    }
+    function MakeCats(props){
         let cardList = [];
         for (let i = 0; i<props.categories.length; i++){
-            let li = "categories/" + props.categories[i].linkName + "/" + props.categories[i].mask;
+            let li = "category/" + props.categories[i].linkName + "/" + props.categories[i].mask + "/1";
             cardList.push(<CategoryCard link={li} title={props.categories[i].name} description={props.categories[i].description}/>);
         }
         return cardList
     }
-
-    render() {
-        return (
-        <Container fluid className="cardGrid">
-            {this.MakeCards(this.props)}
-        </Container>
-        );
-    }
+    return (<div>
+        {MakeCards(props)}
+        {checkPageSelect(props)}
+    </div>);
 }
 
 export default CardGrid;
