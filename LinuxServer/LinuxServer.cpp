@@ -275,8 +275,8 @@ vector<std::string> splitTokens(http_request const& req) {
 
 void handleGet(http_request const& req) {
     string path = req.relative_uri().path();
-    std::cout << "GET called at " << path << endl;
-    std::cout  << endl;
+    //std::cout << "GET called at " << path << endl;
+    //std::cout  << endl;
     if (req.relative_uri().query().size() != 0) { //yes yes I know != 0 is unnecessary but it's easier to read
         handleGetQuery(req);
     }
@@ -382,7 +382,7 @@ void handleGetQueryResults(http_request const& req, QueryMap queries) {
     }
 
     value arr = value::array();
-    cout << stories.size() << endl;
+    //cout << stories.size() << endl;
     for (int i = 0; i < stories.size(); i++) {
         value temp = storyToJSON(stories[i]);
         arr[i] = temp;
@@ -428,7 +428,7 @@ void handleGetQueryStory(http_request const& req, const uint32_t& id, QueryMap q
     else if (queries["t"] == "t") {//request for html file
         std::wifstream file;
         string path = "../" + story.path;
-        cout << path << endl;
+        //cout << path << endl;
         try {
             concurrency::streams::fstream::open_istream(path, std::ios::in)
                 .then([=](concurrency::streams::istream is) {
@@ -923,12 +923,29 @@ void autoSort(uint64_t miliseconds) {
 
 }
 
+void handleHTTPSRedirect(http_request const& req) {
+    web::http::http_response res;
+    web::http::http_headers heads;
+#ifdef DEBUG
+    cout << "hit http" << endl;
+    heads["Location"] = "https://127.0.0.1:8080";
+
+#else
+    heads["Location"] = "https://www.liberfabulas.com";
+#endif
+    //heads["Strict-Transport-Security"] ="max-age=2629744; includeSubDomains";
+    res.headers() = heads;
+    res.set_status_code(301);
+    req.reply(res);
+}
+
 int main(int argc, char* argv[]) {
     
 
-    string localIP = "192.168.0.9";
+    string localIP = "192.168.1.169";
 
     if (argc > 1){ //allows setting local ip through command line
+        //This is used because my debug platform has the server on WSL and the MySQL on Windows native which messes stuff up
         localIP = argv[1];
     }
 
@@ -936,26 +953,20 @@ int main(int argc, char* argv[]) {
     dbp = new DBInterface(localIP, 33060, "app", "xH8#N7GmtILb", "website"); //dev address
 
     //dbp = new DBInterface("54.242.214.211", 33060, "app", "xH8#N7GmtILb", "website"); //server address
-    const std::string base_url = "http://127.0.0.1:8080/";
-#else
-    dbp = new DBInterface("172.26.5.20", 33060, "app", "xH8#N7GmtILb", "website"); //server-local address
-    const std::string base_url = "http://3.225.135.220:80/";
-#endif
+    const std::string base_url = "https://127.0.0.1:8080/";
+    const std::string base_url_http = "http://127.0.0.1:8088/";
 
 
-    createContentMap();
-
+    //SSL stuff
     web::http::experimental::listener::http_listener_config conf;
-    conf.set_ssl_context_callback([](boost::asio::ssl::context& ctx){
+    conf.set_ssl_context_callback([](boost::asio::ssl::context& ctx) {
         try {
-            cout << "callback hit" << endl;
             ctx.set_options(boost::asio::ssl::context::default_workarounds);
 
             boost::system::error_code e;
-            ctx.use_certificate_file("cert.pem", boost::asio::ssl::context::pem);
-            ctx.use_private_key_file("key.pem", boost::asio::ssl::context::pem);
-            ctx.use_certificate_chain_file("chain.pem");
-        }
+            ctx.use_certificate_file("selfcert.pem", boost::asio::ssl::context::pem);
+            ctx.use_private_key_file("selfkey.pem", boost::asio::ssl::context::pem);
+}
         catch (std::exception& ex) {
             cout << "STD EXCEPTION: " << ex.what() << endl;
             throw;
@@ -965,8 +976,41 @@ int main(int argc, char* argv[]) {
             throw;
         }
     });
+#else
+    dbp = new DBInterface("172.26.5.20", 33060, "app", "xH8#N7GmtILb", "website"); //server-local address
+    const std::string base_url = "https://0.0.0.0:443/";
+    const std::string base_url_http = "http://0.0.0.0:80/";
 
 
+    //SSL stuff
+    web::http::experimental::listener::http_listener_config conf;
+    conf.set_ssl_context_callback([](boost::asio::ssl::context& ctx) {
+        try {
+            ctx.set_options(boost::asio::ssl::context::default_workarounds);
+            boost::system::error_code e;
+            ctx.use_certificate_file("cert.pem", boost::asio::ssl::context::pem);
+            ctx.use_private_key_file("key.pem", boost::asio::ssl::context::pem);
+            //ctx.use_certificate_chain_file("chain.pem");
+        }
+        catch (std::exception& ex) {
+            cout << "STD EXCEPTION: " << ex.what() << endl;
+            throw;
+        }
+        catch (const char* ex) {
+            cout << "EXCEPTION: " << ex << endl;
+            throw;
+        }
+        });
+#endif
+
+
+    createContentMap();
+
+    web::http::experimental::listener::http_listener httpListner(base_url_http);//redirects user to https version
+    httpListner.support(web::http::methods::GET, handleHTTPSRedirect);
+
+    httpListner.open().wait();
+    std::cout << std::string(U("Listining for requests at: ")) << base_url_http << std::endl;
 
     web::http::experimental::listener::http_listener listener(base_url, conf);
 
